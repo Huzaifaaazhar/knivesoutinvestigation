@@ -74,6 +74,48 @@ export const BLANC: Script = {
       lines: [{ by: 'npc', text: '', mood: 'thoughtful', gesture: 'lean-in', dynamic: 'hint' }],
     },
     {
+      id: 'will',
+      label: 'The will leaves everything to Marta.',
+      kind: 'document',
+      requires: { evidence: 'EV-20' },
+      lines: [
+        N('Ah. So now we know what kind of lit fuse it was.', 'thoughtful', 'nod'),
+        N('Ask yourself not only who benefits, but who knew — and who would be harmed if the beneficiary could not inherit. A person who kills cannot profit from the death. Every lawyer in this county knows that.', 'thoughtful', 'lean-in'),
+      ],
+    },
+    {
+      id: 'board',
+      label: 'How should I put the case together?',
+      kind: 'hint',
+      requires: { met: 'blanc' },
+      lines: [
+        N('I have left you a board in the library, an easel and a box of pins. Pin what you believe; string together what connects; write on cards what you suspect.', 'warm', 'spread-hands'),
+        N('Beside it hangs a cord for the night’s events. Put them in order. When the order stops making sense, you have learned something.', 'thoughtful', 'nod'),
+      ],
+    },
+    {
+      id: 'ready',
+      label: 'I’m ready. Gather the family.',
+      kind: 'challenge',
+      requires: { all: [{ minEvidence: 5 }, { minContradictions: 1 }] },
+      then: 'confront',
+      lines: [
+        N('Are you? Truly? Once they are in that room, there is no wandering off to look at a clock.', 'thoughtful', 'lean-in'),
+        N('Very well. The living room, by the knives. I shall fetch them. Bring your folder — and your nerve.', 'warm', 'nod'),
+      ],
+    },
+    {
+      id: 'close',
+      label: 'I think we should leave it unsolved.',
+      kind: 'small',
+      requires: { minEvidence: 3 },
+      then: 'close-case',
+      lines: [
+        N('Leave it? Hm. There is no shame in a case that refuses to close. There is only shame in closing it wrongly.', 'sad', 'nod'),
+        N('Then let us walk out into the rain and let the house keep its secret a while longer.', 'thoughtful', 'look-away'),
+      ],
+    },
+    {
       id: 'c-ransom',
       label: 'Ransom says it was a civil chat.',
       kind: 'challenge',
@@ -126,6 +168,8 @@ export const BLANC: Script = {
     },
   ],
   reactions: [
+    { evidence: 'EV-19', kind: 'explain', lines: [N('No overdose. Oh, how lovely. Then whoever arranged this tragedy got the tragedy and missed the crime. Someone burned this so that the family would go on believing Marta killed him.', 'amused', 'point')] },
+    { evidence: 'EV-20', kind: 'explain', lines: [N('Everything to Marta. Now the whole house rearranges itself around that fact, does it not? Who knew — and when?', 'thoughtful', 'lean-in')] },
     { evidence: 'EV-01', kind: 'explain', lines: [N('From his own collection. Whoever chose it — Harlan or another — chose for symbolism over convenience. A kitchen knife would have been closer.', 'thoughtful')] },
     { evidence: 'EV-02', kind: 'explain', needsExamined: true, lines: [N('Two vials, one cap, one size. A careful nurse would never confuse them. A careful nurse, in the dark, rushing? Hm. Keep that label in your pocket.', 'thoughtful', 'lean-in')] },
     { evidence: 'EV-03', kind: 'acknowledge', lines: [N('White was winning. Harlan hated to lose — and yet he lost to her, cheerfully, for years. That tells you something about the two of them.', 'warm')] },

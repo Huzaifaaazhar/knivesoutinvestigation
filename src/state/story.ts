@@ -156,6 +156,12 @@ export function advance() {
     return;
   }
   if (c.then === 'end') return endConversation();
+  const topic = c.topic ? SCRIPTS[c.npc].topics.find((t) => t.id === c.topic) : undefined;
+  if (topic?.then) {
+    useGame.setState({ conversation: null });
+    void import('./finale').then((f) => (topic.then === 'confront' ? f.beginConfrontation() : f.withdraw()));
+    return;
+  }
   useGame.setState({ conversation: { ...c, mode: 'hub', reaction: undefined } });
   const rt = npcRt[c.npc];
   if (rt) rt.gesture = null;
@@ -301,7 +307,10 @@ export function currentHint() {
 export function takeHint(): string {
   const h = currentHint();
   const used = g().hintsUsed[h.id] ?? 0;
-  const level = Math.min(2, used);
+  // "fewer hints" replays: Blanc only ever offers the subtle observation
+  const cap = g().hintMode === 'sparse' ? 0 : 2;
+  const level = Math.min(cap, used);
+  if (g().hintMode === 'sparse' && used >= 1) return 'I have said what I will say, my friend. The rest is yours. ' + h.levels[0];
   useGame.setState({ hintsUsed: { ...g().hintsUsed, [h.id]: Math.min(3, used + 1) } });
   const prefix = level === 0 ? '' : level === 1 ? 'Very well — a little more. ' : 'All right. Plainly, then. ';
   return prefix + h.levels[level];

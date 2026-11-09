@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useGame } from '../state/store';
 import { audio } from '../audio/audio';
-import { clearSave, loadSave } from '../state/save';
+import { backupSave, clearSave, loadReports, loadSave } from '../state/save';
+import type { CaseReport } from '../state/finale';
 import { startInvestigation, continueInvestigation } from './flow';
 
 type Stage = 'black' | 'reveal' | 'title' | 'menu';
@@ -37,7 +38,11 @@ export function Opening() {
   const hasSave = useGame((s) => s.hasSave);
   const reduced = useGame((s) => s.settings.reducedMotion);
   const [stage, setStage] = useState<Stage>('black');
-  const [confirmNew, setConfirmNew] = useState(false);
+  const [confirmNew, setConfirmNew] = useState<false | 'full' | 'sparse'>(false);
+  const [reports, setReports] = useState<CaseReport[]>([]);
+  useEffect(() => {
+    if (phase === 'intro') void loadReports<CaseReport>().then(setReports);
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== 'intro') return;
@@ -114,16 +119,24 @@ export function Opening() {
                     Continue the investigation
                   </MenuButton>
                 )}
-                <MenuButton testId="new" primary={!hasSave} onClick={() => (hasSave ? setConfirmNew(true) : startNew())}>
+                <MenuButton testId="new" primary={!hasSave} onClick={() => (hasSave ? setConfirmNew('full') : startNew('full'))}>
                   New investigation
                 </MenuButton>
+                <MenuButton testId="new-sparse" onClick={() => (hasSave ? setConfirmNew('sparse') : startNew('sparse'))}>
+                  New investigation — fewer hints
+                </MenuButton>
+                {reports.length > 0 && (
+                  <MenuButton testId="review-case" onClick={() => useGame.setState({ lastReport: reports[reports.length - 1], overlay: 'report' })}>
+                    Review the last case file
+                  </MenuButton>
+                )}
               </>
             ) : (
               <div className="paper max-w-sm rounded-sm px-6 py-5 text-center shadow-2xl">
                 <p className="font-title text-lg">Begin a new case file?</p>
-                <p className="mt-2 text-sm text-ink/75">Your current notes and evidence will be burned. (Settings are kept.)</p>
+                <p className="mt-2 text-sm text-ink/75">Your current case will be set aside in a backup slot, and your closed case files are kept. Evidence, conversations and the house reset.</p>
                 <div className="mt-4 flex justify-center gap-3">
-                  <button data-testid="confirm-new" onClick={startNew} className="border border-burgundy bg-burgundy px-4 py-2 font-ui text-xs uppercase tracking-widest text-ivory">
+                  <button data-testid="confirm-new" onClick={() => startNew(confirmNew || 'full')} className="border border-burgundy bg-burgundy px-4 py-2 font-ui text-xs uppercase tracking-widest text-ivory">
                     Begin anew
                   </button>
                   <button onClick={() => setConfirmNew(false)} className="border border-ink/40 px-4 py-2 font-ui text-xs uppercase tracking-widest">
@@ -144,11 +157,14 @@ export function Opening() {
     </div>
   );
 
-  async function startNew() {
+  async function startNew(mode: 'full' | 'sparse') {
     audio.play('click');
+    await backupSave();
     await clearSave();
     useGame.getState().newGame();
+    useGame.setState({ hintMode: mode, startedTs: Date.now() });
     useGame.getState().setHasSave(false);
+    setConfirmNew(false);
     useGame.getState().setPhase('invitation');
   }
 }

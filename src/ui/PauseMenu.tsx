@@ -4,6 +4,26 @@ import { manualSave, returnToTitle } from '../state/persistence';
 import { placeName } from '../data/layout';
 import { audio } from '../audio/audio';
 
+function SoundPanel() {
+  const st = useGame((s) => s.settings);
+  const up = useGame((s) => s.updateSettings);
+  const row = (label: string, key: 'volume' | 'music' | 'ambience' | 'effects') => (
+    <label className="flex items-center gap-3">
+      <span className="w-24 text-right font-mono text-[10px] uppercase tracking-[0.2em] text-ivory/60">{label}</span>
+      <input data-testid={`sound-${key}`} type="range" min={0} max={1} step={0.05} value={st[key]} onChange={(e) => up({ [key]: Number(e.target.value) })} className="flex-1 accent-[#b69a65]" />
+    </label>
+  );
+  return (
+    <div className="mx-auto mt-6 w-full max-w-xs space-y-2 border-t border-ivory/15 pt-4" data-testid="sound-panel">
+      <div className="font-mono text-[9px] uppercase tracking-[0.4em] text-gold/60">Sound</div>
+      {row('Master', 'volume')}
+      {row('Music', 'music')}
+      {row('Rain & house', 'ambience')}
+      {row('Effects', 'effects')}
+    </div>
+  );
+}
+
 export function PauseMenu() {
   const overlay = useGame((s) => s.overlay);
   const room = useGame((s) => s.player.room);
@@ -48,6 +68,7 @@ export function PauseMenu() {
           void st;
         })}
         {item('Leave for the title', () => void returnToTitle())}
+        <SoundPanel />
       </div>
     </motion.div>
   );

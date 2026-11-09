@@ -197,6 +197,46 @@ function Paper({ doc, ...p }: Props & { doc: DocumentDef }) {
       </div>
     );
   }
+  if (doc.paper === 'will') {
+    return (
+      <div className="relative w-[min(92vw,620px)] px-8 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.8)] sm:px-14" style={{ background: 'linear-gradient(180deg,#eadbb6,#dcc89c)', color: '#2a1d16' }} data-testid="will-paper">
+        <div className="pointer-events-none absolute inset-3 border-[3px] border-double border-[#7a5a32]/60" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(110,70,30,0.35))]" />
+        <div className="relative text-center font-title text-[1.35rem] italic tracking-wide">{doc.heading}</div>
+        <div className="relative mx-auto mt-2 h-px w-48 bg-[#7a5a32]/60" />
+        <div className="relative mt-5 space-y-3 font-display text-[16px] leading-[1.55] sm:text-[17px]">
+          {doc.body.map((b, i) => (
+            <p key={i} className={b.startsWith('[[annotation') ? 'hand -rotate-1 text-[1.4rem] leading-tight text-[#4a4a50]' : ''}>
+              {inline(b)}
+            </p>
+          ))}
+        </div>
+        <div className="relative mt-6 flex items-end justify-between">
+          <div>
+            <div className="font-hand text-4xl text-[#1d2a4a]">{doc.signature}</div>
+            <div className="mt-1 h-px w-48 bg-ink/50" />
+            <div className="font-mono text-[9px] uppercase tracking-[0.3em] text-ink/60">Testator</div>
+          </div>
+        </div>
+        {doc.marks?.map((m) =>
+          m.kind === 'stamp' ? (
+            <button
+              key={m.id}
+              data-hotspot={m.id}
+              onClick={() => p.onDetail(m.id)}
+              className={`absolute flex cursor-zoom-in items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_35%,#b0283a,#5a0c18)] font-title text-sm italic text-[#f1d8c0] shadow-[0_3px_8px_rgba(0,0,0,0.5)] ${p.seen.includes(m.id) ? 'ring-2 ring-gold' : ''}`}
+              style={{ left: `${m.x}%`, top: `${m.y}%`, width: 64, height: 64 }}
+              aria-label="Wax seal"
+            >
+              H.T.
+            </button>
+          ) : (
+            <Mark key={m.id} m={m} seen={p.seen.includes(m.id)} onClick={() => p.onDetail(m.id)} />
+          ),
+        )}
+      </div>
+    );
+  }
   if (doc.paper === 'card') {
     return (
       <div className="paper relative w-[min(80vw,380px)] rounded-[3px] px-8 py-10 text-center shadow-[0_30px_80px_rgba(0,0,0,0.8)]" style={{ transform: 'rotate(1deg)' }}>

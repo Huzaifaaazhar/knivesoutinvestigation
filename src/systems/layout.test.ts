@@ -128,7 +128,7 @@ describe('interactables & evidence', () => {
 
   it('evidence objects need inspection (key details) before they can be logged', () => {
     for (const it of INTERACTABLES.filter((i) => i.evidence)) {
-      expect(it.kind === 'inspect' || it.kind === 'document', it.id).toBe(true);
+      expect(['inspect', 'document', 'will'].includes(it.kind), it.id).toBe(true);
       expect((it.hotspots ?? []).some((h) => h.key), it.id).toBe(true);
       expect(EVIDENCE_BY_ID[it.evidence!]).toBeTruthy();
     }

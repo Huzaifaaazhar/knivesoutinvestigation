@@ -73,6 +73,7 @@ export function PlayerController() {
             endMemory();
             return;
           }
+          if (s.overlay === 'confrontation' || s.overlay === 'ending' || s.overlay === 'report') return;
           if (s.overlay === 'none') s.openOverlay('pause');
           else s.closeOverlay();
           return;
@@ -184,7 +185,7 @@ export function PlayerController() {
 
     const exploring = s.overlay === 'none';
     // conversations and memories take over the camera
-    if (s.overlay === 'conversation' || s.overlay === 'flashback') {
+    if (s.overlay === 'conversation' || s.overlay === 'flashback' || s.cinema) {
       vel.current.set(0, 0);
       return;
     }
@@ -302,6 +303,10 @@ export function PlayerController() {
     snapTimer.current -= dt;
     if (snapTimer.current <= 0) {
       snapTimer.current = 0.3;
+      const onGround = runtime.level === 0;
+      const clockD = Math.hypot(runtime.x + 3.6, runtime.z - 3.2);
+      const fireD = Math.min(Math.hypot(runtime.x + 15.5, runtime.z - 5), Math.hypot(runtime.x - 15.5, runtime.z - 5));
+      audio.setProximity(onGround ? Math.max(0, 1 - clockD / 9) : 0, onGround ? Math.max(0, 1 - fireD / 9) : 0);
       useGame.setState({ player: { x: runtime.x, y: runtime.y, z: runtime.z, yaw: runtime.yaw, pitch: runtime.pitch, level: runtime.level, room: runtime.room } });
     }
   });

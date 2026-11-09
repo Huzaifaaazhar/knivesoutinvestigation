@@ -101,6 +101,10 @@ function enquiries(s: ReturnType<typeof useGame.getState>): string[] {
   if (m.includes('tried-harlan-sitting')) {
     if (!s.doors['harlan-sitting']?.unlocked) out.push('The sitting-room door is bolted from the bedroom side.');
   }
+  if (m.includes('found-hidden-compartment') && !s.evidence['EV-20']) out.push('There was something else behind that hollow book. A seal?');
+  if (m.includes('found-tox-fragment') && !s.evidence['EV-19']) out.push('“…toxicology…” on a burned scrap. Did anyone keep a copy? Fran keeps copies of everything.');
+  if (s.met.includes('blanc') && !s.examined.includes('evidence-wall')) out.push('Blanc has left a board for me in the library.');
+  if (Object.keys(s.evidence).length >= 5 && Object.keys(s.contradictions).length >= 1 && !s.finale.verdict) out.push('When I can explain the whole night, tell Blanc to gather the family.');
   if (!out.length) out.push('Keep looking. Nothing is ordinary until proven so.');
   return out.slice(0, 4);
 }
@@ -513,6 +517,9 @@ function SettingsPage({ settings }: { settings: Settings }) {
       <PageTitle sub="Preferences">Settings</PageTitle>
       <div className="space-y-3" data-testid="settings">
         <Slider label="Volume" value={settings.volume} min={0} max={1} step={0.1} onChange={(v) => up({ volume: v })} />
+        <Slider label="Music" value={settings.music} min={0} max={1} step={0.1} onChange={(v) => up({ music: v })} />
+        <Slider label="Rain & house" value={settings.ambience} min={0} max={1} step={0.1} onChange={(v) => up({ ambience: v })} />
+        <Slider label="Effects" value={settings.effects} min={0} max={1} step={0.1} onChange={(v) => up({ effects: v })} />
         <Slider label="Look sensitivity" value={settings.sensitivity} min={0.3} max={2.5} step={0.1} onChange={(v) => up({ sensitivity: v })} />
         <Slider label="Field of view" value={settings.fov} min={55} max={90} step={1} onChange={(v) => up({ fov: v })} />
         <div className="grid grid-cols-1 gap-2 pt-1">

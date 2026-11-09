@@ -8,6 +8,7 @@ import { B, Cyl, M, Sph } from './kit';
 import { Armchair, Car, Daybed } from './furniture';
 import { portraitTexture } from './textures';
 import { CHARACTER_BY_ID } from '../data/case';
+import { useGame } from '../state/store';
 import type { VisualKey } from '../data/interactables';
 
 type P = Record<string, any>;
@@ -865,6 +866,73 @@ export const Album: FC<P> = () => (
   </group>
 );
 
+export const WillEnvelope: FC<P> = () => (
+  <group>
+    <B p={[0, 0.002, 0]} s={[0.24, 0.004, 0.16]} m={M.color('#d9c49a', 0.9)} />
+    <mesh position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]} material={M.color('#7a1420', 0.4)}>
+      <circleGeometry args={[0.022, 18]} />
+    </mesh>
+  </group>
+);
+
+/** Blanc's corkboard on an easel. Shows whatever the player has pinned and strung. */
+export const Corkboard: FC<P> = () => {
+  const cards = useGame((s) => s.wall.cards);
+  const links = useGame((s) => s.wall.links);
+  const cork = cached('cork', () =>
+    canvasTex(256, 160, (g) => {
+      g.fillStyle = '#9a7a4e';
+      g.fillRect(0, 0, 256, 160);
+      for (let i = 0; i < 2500; i++) {
+        g.fillStyle = `rgba(${Math.random() > 0.5 ? '60,40,20' : '200,170,120'},${Math.random() * 0.35})`;
+        g.fillRect(Math.random() * 256, Math.random() * 160, 2, 2);
+      }
+    }),
+  );
+  const W = 2.4;
+  const H = 1.4;
+  const at = (x: number, y: number): [number, number, number] => [-W / 2 + (x / 1600) * W, 1.95 - (y / 1000) * H, 0.035];
+  const byId = Object.fromEntries(cards.map((c) => [c.id, c]));
+  return (
+    <group>
+      {[-1.1, 1.1].map((x) => (
+        <B key={x} p={[x, 0.95, -0.12]} r={[0.12, 0, 0]} s={[0.06, 1.95, 0.06]} m={M.darkwood()} />
+      ))}
+      <B p={[0, 0.85, -0.38]} r={[-0.35, 0, 0]} s={[0.06, 1.8, 0.06]} m={M.darkwood()} />
+      <B p={[0, 1.25, 0]} s={[W + 0.1, H + 0.1, 0.04]} m={M.walnut()} />
+      <mesh position={[0, 1.25, 0.022]}>
+        <planeGeometry args={[W, H]} />
+        <meshStandardMaterial map={cork} roughness={1} />
+      </mesh>
+      {cards.slice(0, 40).map((c) => (
+        <group key={c.id} position={at(c.x + 60, c.y + 45)} rotation={[0, 0, (c.rot * Math.PI) / 180]}>
+          <mesh>
+            <planeGeometry args={[0.15, 0.1]} />
+            <meshStandardMaterial color={c.kind === 'evidence' ? '#efe4cc' : c.kind === 'person' ? '#f4efe4' : c.kind === 'note' ? '#e8d98a' : '#d9cbaf'} roughness={0.9} />
+          </mesh>
+          <mesh position={[0, 0.04, 0.005]} material={M.color('#982b39', 0.4)}>
+            <sphereGeometry args={[0.008, 6, 4]} />
+          </mesh>
+        </group>
+      ))}
+      {links.slice(0, 40).map((l) => {
+        const a = byId[l.a];
+        const b = byId[l.b];
+        if (!a || !b) return null;
+        const p = new THREE.Vector3(...at(a.x + 60, a.y + 45));
+        const q = new THREE.Vector3(...at(b.x + 60, b.y + 45));
+        const mid = p.clone().add(q).multiplyScalar(0.5);
+        const len = p.distanceTo(q);
+        return (
+          <mesh key={l.id} position={[mid.x, mid.y + 0.04, 0.045]} rotation={[0, 0, Math.atan2(q.y - p.y, q.x - p.x)]} material={M.color('#a01828', 0.6)}>
+            <boxGeometry args={[len, 0.004, 0.003]} />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+};
+
 const ArmchairProp: FC<P> = () => <Armchair c="#4a3a2a" />;
 const CarProp: FC<P> = () => <Car c="#2a3a2a" vintage />;
 const DaybedProp: FC<P> = () => <Daybed />;
@@ -916,4 +984,6 @@ export const VISUALS: Record<VisualKey, VisualEntry> = {
   latch: { C: Latch, center: [0, -0.05, 0], radius: 0.22 },
   treeFrame: { C: TreeFrame, center: [0, 0.2, 0], radius: 0.3 },
   album: { C: Album, center: [0, 0.03, 0], radius: 0.25 },
+  willEnvelope: { C: WillEnvelope, center: [0, 0, 0], radius: 0.15 },
+  corkboard: { C: Corkboard, center: [0, 1.2, 0], radius: 1.4 },
 };

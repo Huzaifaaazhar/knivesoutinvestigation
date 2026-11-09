@@ -45,7 +45,9 @@ export type VisualKey =
   | 'fountain'
   | 'latch'
   | 'treeFrame'
-  | 'album';
+  | 'album'
+  | 'willEnvelope'
+  | 'corkboard';
 
 export interface Hotspot {
   id: string;
@@ -58,7 +60,7 @@ export interface Hotspot {
 }
 
 export interface DocumentDef {
-  paper: 'letter' | 'card' | 'ledger' | 'note' | 'photo' | 'burnt';
+  paper: 'letter' | 'card' | 'ledger' | 'note' | 'photo' | 'burnt' | 'will';
   heading?: string;
   /** Paragraphs. Inline hotspots use the markup [[hotspotId|visible text]]. */
   body: string[];
@@ -76,7 +78,7 @@ export interface InteractableDef {
   /** Focus point used for targeting and prompt anchoring. */
   pos: [number, number, number];
   verb: string;
-  kind: 'inspect' | 'document' | 'observe' | 'portrait' | 'pickup' | 'relations' | 'album';
+  kind: 'inspect' | 'document' | 'observe' | 'portrait' | 'pickup' | 'relations' | 'album' | 'will' | 'wall';
   /** Placement of a visual in the world (omit when the object is part of the furniture). */
   model?: { visual: VisualKey; pos: [number, number, number]; rotY?: number; props?: Record<string, unknown> };
   /** Visual used in the inspection view, if different from the world model. */
@@ -202,6 +204,7 @@ export const INTERACTABLES: InteractableDef[] = [
     kind: 'inspect',
     inspectVisual: { visual: 'ashGrate', distance: 1.6 },
     evidence: 'EV-06',
+    grants: { milestone: 'found-tox-fragment' },
     observation: 'Someone burned papers in the living room fire. One scrap survived, curled at the back of the grate.',
     hotspots: [
       { id: 'fragment', label: 'Paper fragment', detail: 'Letterhead fragment: "…ty Medical Examin…". Below it: "…toxicology…".', at: [0.12, 0.2, 0.08], key: true },
@@ -286,6 +289,7 @@ export const INTERACTABLES: InteractableDef[] = [
       { id: 'vials', label: 'The two vials', detail: 'MORPHINE 100 mg/ml and KETOROLAC (Toradol) 30 mg/ml. Same cap, same size, same glass.', at: [-0.03, 0.11, 0.22], key: true },
       { id: 'labels', label: 'Labels', detail: 'The Toradol label has been peeled and re-stuck. Recently.', at: [0.03, 0.045, 0.245], key: true },
       { id: 'tag', label: 'Name tag', detail: '"M. CABRERA, RN". Stitched by hand.', at: [-0.15, 0.08, 0.13] },
+      { id: 'naloxone', label: 'Empty pocket', detail: 'The pocket marked NALOXONE — the emergency antidote for a morphine overdose — is empty.', at: [0.15, 0.13, 0.12] },
     ],
   },
   {
@@ -886,6 +890,93 @@ export const INTERACTABLES: InteractableDef[] = [
     model: { visual: 'album', pos: [-12.7, 0.46, 5.1], rotY: 0.3 },
     observation: 'A leather photograph album on the coffee table. Harlan wrote on the back of every picture.',
     grants: { milestone: 'opened-album' },
+  },
+
+  // ───────────── Part 3: the case comes together ─────────────
+  {
+    id: 'fran-coat',
+    name: 'Fran’s Coat',
+    room: 'backhall',
+    level: 0,
+    pos: [0.45, 1.3, -13.15],
+    verb: 'Search the pockets',
+    kind: 'document',
+    requires: 'found-tox-fragment',
+    evidence: 'EV-19',
+    observation: 'In the housekeeper’s coat pocket: a complete copy of the report someone burned in the living-room fire.',
+    document: {
+      paper: 'letter',
+      heading: 'OFFICE OF THE COUNTY MEDICAL EXAMINER · TOXICOLOGY',
+      date: 'Subject: Thrombey, Harlan · [[date|received the Monday after his death]]',
+      body: [
+        'Specimen: femoral blood.',
+        '[[morphine|Morphine: 0.06 mg/L — consistent with the prescribed nightly dose.]]',
+        '[[ketorolac|Ketorolac: present, at the prescribed level.]]',
+        '[[conclusion|No drug overdose. Cause of death: exsanguination from a self-inflicted wound to the neck.]]',
+        'Pinned to it, in a different hand: [[fran|“I have a copy too. I know what you did with the vials.”]]',
+      ],
+      marks: [{ id: 'fold', x: 0, y: 50, w: 100, h: 3, kind: 'fold' }],
+    },
+    hotspots: [
+      { id: 'morphine', label: 'Morphine level', detail: 'A normal dose. Harlan did not receive 100 mg of morphine. Whatever Marta believes, she gave him the right medicine.', key: true },
+      { id: 'conclusion', label: 'Conclusion', detail: 'No overdose. Harlan would have lived through the night — if he had not been convinced otherwise.', key: true },
+      { id: 'fran', label: 'Fran’s note', detail: '“What you did with the vials.” Fran knew the vials had been tampered with — and whoever she wrote to burned the original.', key: true },
+      { id: 'ketorolac', label: 'Ketorolac', detail: 'The Toradol was given too. Both doses were correct.' },
+      { id: 'date', label: 'Date', detail: 'Received after the family had gathered. Someone made sure they never read it.' },
+      { id: 'fold', label: 'Folded small', detail: 'Folded to pocket size and carried around. Fran meant to use it.' },
+    ],
+  },
+  {
+    id: 'sealed-will',
+    name: 'Sealed Will',
+    room: 'library',
+    level: 0,
+    pos: [12.6, 1.12, 0.65],
+    verb: 'Unseal',
+    kind: 'will',
+    model: { visual: 'willEnvelope', pos: [12.6, 1.02, 0.6], rotY: 0 },
+    requires: 'found-hidden-compartment',
+    evidence: 'EV-20',
+    observation: 'Behind the hollow book, a heavy envelope sealed in red wax: Harlan’s own copy of his new will.',
+    document: {
+      paper: 'will',
+      heading: 'Last Will and Testament of Harlan Thrombey',
+      body: [
+        'I, HARLAN THROMBEY, of Crofton Road in the Commonwealth of Massachusetts, being of sound mind, declare this to be my Last Will and Testament, and I revoke all wills and codicils previously made by me.',
+        'FIRST. [[beneficiary|I give, devise and bequeath the whole of my estate — my house and its contents, my investments, and my entire interest in Blood Like Wine Publishing — to MARTA CABRERA.]]',
+        'SECOND. ~~I give my house at Crofton Road to my grandson Hugh Drysdale.~~ [[alteration|Struck through; initialled H.T. and A.S. in the margin.]]',
+        'THIRD. [[family|To my children and grandchildren I leave their personal effects and my love, which they will find is worth more than they believe. It is a gift, not a punishment.]]',
+        'Signed by the Testator in our presence, and by us in his. [[witness|Alan Stevens, Attorney at Law · Notary Public, Middlesex County · 14 October]]',
+        '[[annotation|In pencil, in the margin, in Harlan’s hand: “Told R. at the party.”]]',
+      ],
+      signature: 'Harlan Thrombey',
+      marks: [
+        { id: 'seal', x: 76, y: 82, w: 14, h: 11, kind: 'stamp' },
+        { id: 'fold', x: 0, y: 33, w: 100, h: 2, kind: 'fold' },
+      ],
+    },
+    hotspots: [
+      { id: 'beneficiary', label: 'Sole beneficiary', detail: 'Everything — the house, the fortune, Blood Like Wine Publishing — to Marta Cabrera.', key: true },
+      { id: 'family', label: 'The family', detail: 'The children and grandchildren receive their personal effects and nothing else. Harlan explains: it is a gift, not a punishment.', key: true },
+      { id: 'witness', label: 'Witnesses', detail: 'Signed by Harlan and witnessed by Alan Stevens and a notary, both dated October 14th. Properly executed.', key: true },
+      { id: 'alteration', label: 'Struck clause', detail: 'A clause leaving the house to “my grandson Hugh” is struck through and initialled H.T. and A.S. A valid amendment, not a forgery.', key: true },
+      { id: 'annotation', label: 'Pencilled note', detail: 'In the margin, in Harlan’s pencil: “Told R. at the party.” Ransom knew.', key: true },
+      { id: 'seal', label: 'Wax seal', detail: 'Harlan’s own seal, unbroken until now. Nobody else has read this copy.' },
+      { id: 'fold', label: 'Folds', detail: 'Folded in three to fit the book. Creases crisp — handled once.' },
+    ],
+  },
+  {
+    id: 'evidence-wall',
+    name: 'Investigation Board',
+    room: 'library',
+    level: 0,
+    pos: [10.5, 1.45, 8.35],
+    verb: 'Work the case',
+    kind: 'wall',
+    model: { visual: 'corkboard', pos: [10.5, 0, 8.75], rotY: Math.PI },
+    block: [2.7, 0.5],
+    range: 3.2,
+    observation: 'Blanc has set up a corkboard on an easel in the library. “For you,” says a card pinned to the corner. “Pins are in the drawer. String is cheap.”',
   },
 ];
 

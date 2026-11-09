@@ -96,6 +96,21 @@ export const MARTA: Script = {
       again: [N('I told you what happened with the window. I can’t talk about it again. Not tonight.', 'nervous', 'look-away')],
     },
     {
+      id: 'tox',
+      label: 'The toxicology report came back.',
+      kind: 'document',
+      requires: { evidence: 'EV-19' },
+      lines: [
+        Y('There was no overdose, Marta. The morphine was a normal dose.'),
+        N('No. No, that’s not — I read the labels. I gave him the hundred milligrams. I saw it.', 'surprised', 'step-back', { tell: 'Marta grips the edge of the counter as if the floor has moved.' }),
+        N('Unless the labels were… Unless someone…', 'thoughtful', 'hand-mouth'),
+        N('I always know them by the weight. By the feel of the liquid. I must have — my hands chose the right one, and my eyes told me I had killed him.', 'sad', 'hand-chest', {
+          tell: 'Marta is crying, and for the first time tonight she does not look afraid.',
+          effects: [{ note: 'Marta, on the report: her hands chose the right vial; the labels told her otherwise. Someone switched them.' }],
+        }),
+      ],
+    },
+    {
       id: 'meg',
       label: 'Meg seems to look out for you.',
       kind: 'relationship',
@@ -104,6 +119,8 @@ export const MARTA: Script = {
     },
   ],
   reactions: [
+    { evidence: 'EV-19', kind: 'surprise', lines: [N('A normal dose? Then he — then I didn’t —', 'surprised', 'hand-mouth', { tell: 'Marta reads the report three times. Her lips move with the numbers.' })] },
+    { evidence: 'EV-20', kind: 'surprise', lines: [N('Me? Everything? No. No, he wouldn’t — they’ll never — oh, Harlan, what did you do?', 'surprised', 'hand-chest', { tell: 'Marta looks more frightened by the will than by anything else tonight.', effects: [{ motive: { character: 'marta', category: 'inheritance' } }] })] },
     {
       evidence: 'EV-02',
       kind: 'explain',
@@ -242,6 +259,30 @@ export const RANSOM: Script = {
       again: [N('We argued. I left. The end. Roll credits.', 'irritated', 'wave-off')],
     },
     {
+      id: 'challenge-car',
+      label: 'Your car was still here after the rain.',
+      kind: 'challenge',
+      requires: { contradiction: 'C-ransom-car' },
+      lines: [
+        Y('Those ruts on the service drive were cut after the rain began. You said you were home by half nine.'),
+        N('I said I drove home. I didn’t say when I started.', 'smug', 'spread-hands', { tell: 'Ransom smiles, but his foot has started tapping.' }),
+        N('I sat in my car and brooded. For a while. A long while. Then I drove off. Brooding isn’t a crime.', 'defensive', 'cross-arms', { effects: [says('S-ransom-stayed')] }),
+        N('And before you ask — no, I didn’t go back inside. Why would I? Nobody in there wanted me.', 'irritated', 'look-away', { tell: 'He answers a question you didn’t ask.' }),
+      ],
+      again: [N('I brooded. In a car. Alone. Write it in your little book.', 'irritated', 'wave-off')],
+    },
+    {
+      id: 'will-truth',
+      label: 'Harlan told you about the will.',
+      kind: 'document',
+      requires: { any: [{ evidence: 'EV-20' }, { detail: 'sealed-will:annotation' }] },
+      lines: [
+        Y('“Told R. at the party.” It’s pencilled in the margin of his own copy.'),
+        N('He told me. Everything to the nurse. My grandfather’s idea of a birthday present to himself.', 'angry', 'spread-hands', { effects: [says('S-ransom-knew'), { motive: { character: 'ransom', category: 'inheritance' } }, { relationship: 'R-harlan-ransom-conflict' }] }),
+        N('So yes, I knew, and yes, I was angry. Being angry is the most natural thing in the world. Everyone in this house is angry. Go and ask them.', 'smug', 'lean-in', { tell: 'Ransom is enjoying this less than he wants you to think.' }),
+      ],
+    },
+    {
       id: 'challenge-cake',
       label: 'You were in your coat before the cake.',
       kind: 'challenge',
@@ -257,6 +298,10 @@ export const RANSOM: Script = {
     },
   ],
   reactions: [
+    { evidence: 'EV-19', kind: 'defensive', lines: [N('Medical paperwork. Riveting. Why would I care what was in an old man’s blood?', 'defensive', 'wave-off', { tell: 'Ransom’s eyes go to the fireplace, then back to you.' })] },
+    { evidence: 'EV-06', kind: 'denial', lines: [N('Somebody burned some paper in a fireplace. In a house with six fireplaces. Call the FBI.', 'smug', 'wave-off', { tell: 'He doesn’t ask what the paper was.' })] },
+    { evidence: 'EV-02', kind: 'denial', lines: [N('The nurse’s bag. What would I want with that? I don’t even know which end of a syringe is which.', 'smug', 'shrug', { tell: 'For someone who doesn’t care, he answers very quickly.' })] },
+    { evidence: 'EV-20', kind: 'refuse', lines: [N('I’m not discussing my grandfather’s idea of a joke.', 'angry', 'step-back')] },
     { evidence: 'EV-10', kind: 'defensive', lines: [N('He moved my place card. Grandpa was petty in ink. That’s not a confession, that’s stationery.', 'irritated', 'wave-off', { tell: 'He doesn’t look at the card for long.' })] },
     { evidence: 'EV-13', kind: 'defensive', lines: [N('Nice photo. I look great. I always look like I’m leaving; it’s my brand.', 'defensive', 'shrug')] },
     { evidence: 'EV-15', kind: 'acknowledge', lines: [N('Mud. In the country. Stop the presses.', 'smug', 'wave-off')] },

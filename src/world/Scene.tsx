@@ -13,6 +13,7 @@ import { runtime, useGame } from '../state/store';
 import { routeTo, type Waypoint } from '../systems/navigation';
 import { NPCs } from './npc/NPCs';
 import { ConversationCamera, FlashbackStage, PlayerAvatar } from './npc/Cinematics';
+import { CinemaStage } from './npc/CinemaStage';
 import { MEMORY_BY_ID } from '../data/relations';
 
 // ───────────────────────── Visibility ─────────────────────────
@@ -478,7 +479,8 @@ export function World() {
     const a = s.flashback ? MEMORY_BY_ID[s.flashback.id].actors[0] : null;
     return a ? locate(a.x, a.z, a.level) : null;
   });
-  const vis = phase === 'playing' ? visibleFor(memoryRoom ?? room) : { levels: new Set([0]), exterior: true };
+  const inCinema = useGame((s) => !!s.cinema);
+  const vis = phase === 'playing' && !inCinema ? visibleFor(memoryRoom ?? room) : { levels: new Set([0]), exterior: true };
   const byLevel = useMemo(() => {
     const out: Record<string, Placement[]> = { exterior: [], '-1': [], '0': [], '1': [] };
     for (const p of FURNISHINGS) {
@@ -520,6 +522,7 @@ export function World() {
       <PlayerAvatar />
       <ConversationCamera />
       <FlashbackStage />
+      <CinemaStage />
     </>
   );
 }

@@ -347,6 +347,13 @@ export const MEG: Script = {
       ],
     },
     {
+      id: 'rain',
+      label: 'When did the rain start that night?',
+      kind: 'evening',
+      requires: { discussed: 'meg:evening' },
+      lines: [N('It started pouring around half eleven. I know because Mom made me close the conservatory windows. Like I’m staff.', 'irritated', 'shrug', { effects: [says('S-meg-rain')] })],
+    },
+    {
       id: 'nana',
       label: 'Great Nana says she saw something.',
       kind: 'event',

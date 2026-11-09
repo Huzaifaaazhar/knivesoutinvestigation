@@ -20,6 +20,12 @@ import { ConversationUI, ObserveCard } from './ui/Conversation';
 import { FlashbackUI } from './ui/Flashback';
 import { FamilyTree } from './relations/FamilyTree';
 import { Album } from './relations/Album';
+import { EvidenceWall } from './finale/EvidenceWall';
+import { TimelineCord } from './finale/TimelineCord';
+import { WillViewer } from './finale/WillViewer';
+import { Confrontation } from './finale/Confrontation';
+import { Ending } from './finale/Ending';
+import { CaseReport } from './finale/CaseReport';
 
 export default function App() {
   usePersistence();
@@ -33,7 +39,7 @@ export default function App() {
     return t;
   });
   const playing = phase === 'playing';
-  const cinematic = overlay === 'conversation' || overlay === 'flashback';
+  const cinematic = overlay === 'conversation' || overlay === 'flashback' || overlay === 'confrontation' || overlay === 'ending';
   const dimmed = playing && overlay !== 'none' && !cinematic;
 
   useEffect(() => {
@@ -51,7 +57,7 @@ export default function App() {
       >
         <Canvas
           dpr={quality === 'high' ? [1, 1.75] : [0.75, 1]}
-          frameloop={dimmed && overlay !== 'pause' && overlay !== 'relations' && overlay !== 'album' ? 'demand' : 'always'}
+          frameloop={dimmed && overlay !== 'pause' && overlay !== 'relations' && overlay !== 'album' && overlay !== 'report' ? 'demand' : 'always'}
           camera={{ fov: 68, near: 0.05, far: 600, position: [0, 20, 150] }}
           gl={{ antialias: quality === 'high', powerPreference: 'high-performance' }}
           onCreated={({ gl }) => {
@@ -92,6 +98,12 @@ export default function App() {
         {playing && overlay === 'flashback' && <FlashbackUI key="flashback" />}
         {playing && overlay === 'relations' && <FamilyTree key="relations" />}
         {playing && overlay === 'album' && <Album key="album" />}
+        {playing && overlay === 'wall' && <EvidenceWall key="wall" />}
+        {playing && overlay === 'timeline' && <TimelineCord key="timeline" />}
+        {playing && overlay === 'will' && <WillViewer key="will" />}
+        {playing && overlay === 'confrontation' && <Confrontation key="confrontation" />}
+        {playing && overlay === 'ending' && <Ending key="ending" />}
+        {overlay === 'report' && <CaseReport key="report" />}
       </AnimatePresence>
 
       <Opening />

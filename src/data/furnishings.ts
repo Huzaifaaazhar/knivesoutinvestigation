@@ -110,7 +110,7 @@ export const FURNISHINGS: Placement[] = [
   F('roundTable', 0, 8.4, 6.6, 0, { r: 0.6, h: 0.76 }),
   F('diningChair', 0, 8.4, 7.45, PI),
   F('diningChair', 0, 7.55, 6.6, H),
-  F('floorLamp', 0, 9.4, 8.2),
+  F('floorLamp', 0, 14.6, 8.9),
   ceil('chandelier', 'library', 10, 5, { r: 0.75, drop: 0.9 }),
 
   // ─────── Dining room ───────

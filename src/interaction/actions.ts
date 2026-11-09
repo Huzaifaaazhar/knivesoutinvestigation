@@ -7,6 +7,7 @@ import { doorIdOf, isDoorTarget, isNpcTarget, npcIdOf } from './targeting';
 import { NPC_BY_ID } from '../data/npcs';
 import { MEMORY_BY_TRIGGER } from '../data/relations';
 import { npcStatus, openFamilyTree, startConversation, startMemory } from '../state/story';
+import { openWill } from '../state/finale';
 
 export function isAvailable(id: string): boolean {
   if (isDoorTarget(id) || isNpcTarget(id)) return true;
@@ -100,6 +101,14 @@ export function interact(id: string) {
     case 'relations':
       s.examine(id);
       openFamilyTree();
+      audio.play('paper');
+      break;
+    case 'will':
+      openWill();
+      break;
+    case 'wall':
+      s.examine(id);
+      useGame.setState({ overlay: 'wall' });
       audio.play('paper');
       break;
     case 'album':

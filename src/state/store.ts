@@ -10,12 +10,33 @@ import { CHARACTER_BY_ID } from '../data/case';
 import { audio } from '../audio/audio';
 import type { MotiveCategory } from '../systems/conditions';
 import type { Line, ReactionKind } from '../systems/dialogue';
+import type { CaseReport } from './finale';
+import { EMPTY_ACCUSATION, type Accusation, type EndingId, type Evaluation, type Verdict } from '../systems/deduction';
 
 export type Phase = 'boot' | 'title' | 'intro' | 'invitation' | 'playing';
-export type Overlay = 'none' | 'notebook' | 'folder' | 'map' | 'inspect' | 'pause' | 'conversation' | 'flashback' | 'relations' | 'album';
+export type Overlay =
+  | 'none'
+  | 'notebook'
+  | 'folder'
+  | 'map'
+  | 'inspect'
+  | 'pause'
+  | 'conversation'
+  | 'flashback'
+  | 'relations'
+  | 'album'
+  | 'wall'
+  | 'timeline'
+  | 'will'
+  | 'confrontation'
+  | 'ending'
+  | 'report';
 
 export interface Settings {
   volume: number;
+  music: number;
+  ambience: number;
+  effects: number;
   sensitivity: number;
   invertY: boolean;
   reducedMotion: boolean;
@@ -28,6 +49,9 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   volume: 0.8,
+  music: 0.7,
+  ambience: 0.8,
+  effects: 0.9,
   sensitivity: 1,
   invertY: false,
   reducedMotion: false,
@@ -140,7 +164,41 @@ export const runtime = {
   teleport: null as null | { x: number; z: number; level: Level; yaw?: number },
 };
 
+export type CardKind = 'evidence' | 'statement' | 'person' | 'note' | 'contradiction' | 'event';
+export type LinkType = 'supports' | 'contradicts' | 'motive' | 'opportunity' | 'location' | 'alibi' | 'investigate';
+
+export interface WallCard {
+  id: string;
+  kind: CardKind;
+  ref: string;
+  text?: string;
+  x: number;
+  y: number;
+  rot: number;
+}
+
+export interface WallLink {
+  id: string;
+  a: string;
+  b: string;
+  type: LinkType;
+}
+
+export interface FinaleSave {
+  verdict: Verdict | null;
+  ending: EndingId | null;
+  evaluation: Evaluation | null;
+  accusation: Accusation;
+  closedTs: number | null;
+}
+
 export interface StorySave {
+  wall: { cards: WallCard[]; links: WallLink[] };
+  timeline: string[];
+  willAnswers: Record<string, string[]>;
+  finale: FinaleSave;
+  hintMode: 'full' | 'sparse';
+  startedTs: number;
   met: string[];
   statements: Record<string, Stamp>;
   discussed: string[];
@@ -157,7 +215,7 @@ export interface StorySave {
 }
 
 export interface SaveData extends Partial<StorySave> {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   savedAt: number;
   player: PlayerSnap;
   visited: string[];
@@ -183,6 +241,10 @@ interface GameState extends StorySave {
   conversation: Conversation | null;
   flashback: FlashbackState | null;
   observing: { npc: string; text: string } | null;
+  /** A staged scene (confrontation shots, ending) — transient. */
+  cinema: { scene: string; index: number } | null;
+  /** The case report currently on screen (from the ending, or reviewed from the title). */
+  lastReport: CaseReport | null;
   phase: Phase;
   overlay: Overlay;
   inspecting: string | null;
@@ -274,11 +336,19 @@ function freshState() {
     conversation: null,
     flashback: null,
     observing: null,
+    cinema: null,
+    lastReport: null,
   };
 }
 
 export function freshStory(): StorySave {
   return {
+    wall: { cards: [], links: [] },
+    timeline: [],
+    willAnswers: {},
+    finale: { verdict: null, ending: null, evaluation: null, accusation: { ...EMPTY_ACCUSATION }, closedTs: null },
+    hintMode: 'full',
+    startedTs: Date.now(),
     met: [],
     statements: {},
     discussed: [],
@@ -461,6 +531,7 @@ export const useGame = create<GameState>((set, get) => ({
   updateSettings: (patch) => {
     const settings = { ...get().settings, ...patch };
     audio.setVolume(settings.volume);
+    audio.setMix(settings.music, settings.ambience, settings.effects);
     set({ settings });
   },
   tick: (dt) => set({ playSeconds: get().playSeconds + dt }),
@@ -498,7 +569,7 @@ export const useGame = create<GameState>((set, get) => ({
     for (const k of Object.keys(story) as (keyof StorySave)[]) (story as any)[k] = s[k];
     return {
       ...story,
-      version: 2,
+      version: 3,
       savedAt: Date.now(),
       player: { x: runtime.x, y: runtime.y, z: runtime.z, yaw: runtime.yaw, pitch: runtime.pitch, level: runtime.level, room: runtime.room },
       visited: s.visited,

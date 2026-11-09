@@ -74,6 +74,8 @@ export interface Topic {
   variants?: { when: Cond; lines: Line[] }[];
   /** Short reply when asked again. */
   again?: Line[];
+  /** What happens once the topic's lines are done. */
+  then?: 'confront' | 'close-case';
 }
 
 export type ReactionKind = 'acknowledge' | 'surprise' | 'defensive' | 'denial' | 'explain' | 'revise' | 'refuse';

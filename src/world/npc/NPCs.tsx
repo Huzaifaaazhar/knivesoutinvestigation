@@ -224,7 +224,7 @@ function NpcFigure({ def }: { def: NpcDef }) {
     if (!rt || !gr) return;
     const s = useGame.getState();
     const vis = visibleFor(s.flashback ? 'hall' : runtime.room);
-    const show = !s.flashback && (ZONE_BY_ID[rt.room] ? vis.exterior : vis.levels.has(rt.level));
+    const show = !s.flashback && !s.cinema && (ZONE_BY_ID[rt.room] ? vis.exterior : vis.levels.has(rt.level));
     gr.visible = show && s.phase === 'playing';
     if (!gr.visible) return;
     gr.position.set(rt.x, rt.y, rt.z);

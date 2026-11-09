@@ -33,6 +33,15 @@ class AudioEngine {
   private env: Env = 'muted';
   private volume = 0.8;
   private timers: number[] = [];
+  /** Buses: ambience (rain, wind, drone), music, effects. */
+  private ambBus!: GainNode;
+  private sfxBus!: GainNode;
+  private musicBus!: GainNode;
+  private moodGain!: GainNode;
+  private mood: 'none' | 'tension' | 'resolve' | 'somber' = 'none';
+  private moodTimer = 0;
+  private tickGain!: GainNode;
+  private fireGain!: GainNode;
 
   get ready() {
     return !!this.ctx;
@@ -53,6 +62,15 @@ class AudioEngine {
     this.master = ctx.createGain();
     this.master.gain.value = this.volume;
     this.master.connect(comp).connect(ctx.destination);
+    this.ambBus = ctx.createGain();
+    this.sfxBus = ctx.createGain();
+    this.musicBus = ctx.createGain();
+    this.ambBus.connect(this.master);
+    this.sfxBus.connect(this.master);
+    this.musicBus.connect(this.master);
+    this.moodGain = ctx.createGain();
+    this.moodGain.gain.value = 0;
+    this.moodGain.connect(this.musicBus);
 
     // Pink-ish noise buffer shared by rain, wind and foley
     const len = ctx.sampleRate * 3;
@@ -81,7 +99,7 @@ class AudioEngine {
     rainHp.frequency.value = 300;
     this.rainGain = ctx.createGain();
     this.rainGain.gain.value = 0;
-    rain.connect(rainHp).connect(this.rainFilter).connect(this.rainGain).connect(this.master);
+    rain.connect(rainHp).connect(this.rainFilter).connect(this.rainGain).connect(this.ambBus);
     rain.start();
 
     // Wind
@@ -101,7 +119,7 @@ class AudioEngine {
     lfoAmt.gain.value = 180;
     lfo.connect(lfoAmt).connect(wf.frequency);
     lfo.start();
-    wind.connect(wf).connect(this.windGain).connect(this.master);
+    wind.connect(wf).connect(this.windGain).connect(this.ambBus);
     wind.start();
 
     // Drone: low fifth with slow beating
@@ -110,7 +128,7 @@ class AudioEngine {
     const dl = ctx.createBiquadFilter();
     dl.type = 'lowpass';
     dl.frequency.value = 260;
-    this.droneGain.connect(dl).connect(this.master);
+    this.droneGain.connect(dl).connect(this.ambBus);
     for (const [f, type] of [
       [55, 'sine'],
       [55.4, 'triangle'],
@@ -135,12 +153,103 @@ class AudioEngine {
     fb.gain.value = 0.38;
     const wet = ctx.createGain();
     wet.gain.value = 0.35;
-    this.musicGain.connect(this.master);
+    this.musicGain.connect(this.musicBus);
     this.musicGain.connect(delay);
     delay.connect(fb).connect(delay);
-    delay.connect(wet).connect(this.master);
+    delay.connect(wet).connect(this.musicBus);
+
+    // Proximity loops: the hall clock and the fires
+    this.tickGain = ctx.createGain();
+    this.tickGain.gain.value = 0;
+    this.tickGain.connect(this.ambBus);
+    this.fireGain = ctx.createGain();
+    this.fireGain.gain.value = 0;
+    const fire = ctx.createBufferSource();
+    fire.buffer = this.noiseBuf;
+    fire.loop = true;
+    fire.playbackRate.value = 0.7;
+    const ff = ctx.createBiquadFilter();
+    ff.type = 'bandpass';
+    ff.frequency.value = 1200;
+    ff.Q.value = 0.5;
+    fire.connect(ff).connect(this.fireGain);
+    this.fireGain.connect(this.ambBus);
+    fire.start();
+    this.timers.push(
+      window.setInterval(() => {
+        if (!this.ctx || this.tickGain.gain.value < 0.005) return;
+        const t = this.ctx.currentTime;
+        const o = this.ctx.createOscillator();
+        o.type = 'square';
+        o.frequency.value = 2400;
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.25, t + 0.002);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+        const bp = this.ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.value = 3000;
+        o.connect(bp).connect(g).connect(this.tickGain);
+        o.start(t);
+        o.stop(t + 0.05);
+        // a crackle now and then
+        if (Math.random() < 0.6 && this.fireGain.gain.value > 0.01) this.crackle();
+      }, 1000),
+    );
 
     this.schedule();
+    if (this.pendingMix) this.setMix(...this.pendingMix);
+  }
+
+  setMix(music: number, ambience: number, effects: number) {
+    if (!this.ctx) {
+      this.pendingMix = [music, ambience, effects];
+      return;
+    }
+    const t = this.ctx.currentTime;
+    this.musicBus.gain.setTargetAtTime(music, t, 0.1);
+    this.ambBus.gain.setTargetAtTime(ambience, t, 0.1);
+    this.sfxBus.gain.setTargetAtTime(effects, t, 0.1);
+  }
+  private pendingMix: [number, number, number] | null = null;
+
+  /** Proximity levels 0..1 for the hall clock and the nearest lit fire. */
+  setProximity(clock: number, fire: number) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.tickGain.gain.setTargetAtTime(clock * 0.35, t, 0.3);
+    this.fireGain.gain.setTargetAtTime(fire * 0.12, t, 0.3);
+  }
+
+  private crackle() {
+    for (let i = 0; i < 1 + Math.floor(Math.random() * 3); i++) this.noise(0.02, 'highpass', 3000, 0.05 + Math.random() * 0.05, 1, Math.random() * 0.4);
+  }
+
+  /** Original underscore for the finale: a low pulse for tension, open fifths for resolution. */
+  setMood(m: 'none' | 'tension' | 'resolve' | 'somber') {
+    this.mood = m;
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.moodGain.gain.setTargetAtTime(m === 'none' ? 0 : 0.5, t, 1.2);
+    window.clearInterval(this.moodTimer);
+    if (m === 'none') return;
+    const beat = m === 'tension' ? 1400 : 2600;
+    let n = 0;
+    this.moodTimer = window.setInterval(() => {
+      if (!this.ctx) return;
+      n++;
+      if (this.mood === 'tension') {
+        this.tone(55, 1.1, 0.35, 'sine', 0, this.moodGain);
+        if (n % 4 === 0) this.tone(58.27, 1.6, 0.18, 'triangle', 0.2, this.moodGain);
+        if (n % 8 === 0) this.tone(233.08, 2.4, 0.04, 'sine', 0.4, this.moodGain);
+      } else if (this.mood === 'resolve') {
+        const chord = n % 2 ? [146.83, 220, 293.66, 369.99] : [130.81, 196, 261.63, 329.63];
+        chord.forEach((f, i) => this.tone(f, 3.4, 0.07, 'triangle', i * 0.12, this.moodGain));
+      } else {
+        const chord = n % 2 ? [146.83, 174.61, 220] : [130.81, 155.56, 196];
+        chord.forEach((f, i) => this.tone(f, 3.6, 0.06, 'sine', i * 0.2, this.moodGain));
+      }
+    }, beat);
   }
 
   setVolume(v: number) {
@@ -222,7 +331,7 @@ class AudioEngine {
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(gain, t + Math.min(0.01, dur / 4));
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    src.connect(f).connect(g).connect(this.master);
+    src.connect(f).connect(g).connect(this.sfxBus);
     src.start(t, Math.random() * 2);
     src.stop(t + dur + 0.05);
     return { f, g, t };
@@ -239,7 +348,7 @@ class AudioEngine {
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(gain, t + 0.008);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g).connect(dest ?? this.master);
+    o.connect(g).connect(dest ?? this.sfxBus);
     o.start(t);
     o.stop(t + dur + 0.05);
     return o;
@@ -309,7 +418,7 @@ class AudioEngine {
         g.gain.linearRampToValueAtTime(0.06, t + 0.05);
         g.gain.linearRampToValueAtTime(0.03, t + 0.4);
         g.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
-        o.connect(f).connect(g).connect(this.master);
+        o.connect(f).connect(g).connect(this.sfxBus);
         o.start(t);
         o.stop(t + 0.9);
         this.noise(0.05, 'bandpass', 1800, 0.2, 2);

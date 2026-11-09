@@ -187,6 +187,24 @@ export const EVIDENCE: EvidenceDef[] = [
     relatedCharacters: ['walt', 'harlan'],
     relatedEvents: ['party'],
   },
+  {
+    id: 'EV-19',
+    name: 'Toxicology Report — Copy',
+    description: 'A copy of the medical examiner’s toxicology results, folded in Fran’s coat. Harlan’s morphine level was normal. There was no overdose.',
+    category: 'document',
+    location: 'backhall',
+    relatedCharacters: ['marta', 'harlan', 'ransom'],
+    relatedEvents: ['medication', 'death'],
+  },
+  {
+    id: 'EV-20',
+    name: 'Harlan’s Sealed Will',
+    description: 'Harlan’s personal copy of his new will, hidden in “The Sleeper in the Stacks”. Everything — the house, the fortune, the publishing house — goes to Marta Cabrera.',
+    category: 'document',
+    location: 'library',
+    relatedCharacters: ['harlan', 'marta', 'ransom', 'linda', 'walt', 'joni'],
+    relatedEvents: ['will', 'ransom-argument'],
+  },
 ];
 
 export const EVIDENCE_BY_ID: Record<string, EvidenceDef> = Object.fromEntries(EVIDENCE.map((e) => [e.id, e]));

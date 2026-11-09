@@ -131,6 +131,56 @@ pure systems in `systems/conditions.ts`, `systems/dialogue.ts` and
 directs the cast; `ui/Conversation.tsx`, `ui/Flashback.tsx`, `relations/*` and
 `notebook/StoryPages.tsx` present them.
 
+## Part 3 — The Final Reveal
+
+The case can now be solved. The truth is fixed (`data/mystery.ts`) and follows the
+film's premise; it never changes with the player's choices, and every essential clue is
+held by an object or a person in the house.
+
+- **The investigation board** — Blanc's corkboard on an easel in the library. Pin
+  evidence, testimony, people, contradictions and timeline cards from the drawer; drag
+  them around; write notes on cards; zoom and pan; tie cards together with red string of
+  a chosen meaning — *supports, contradicts, establishes motive / opportunity /
+  location, disproves an alibi, needs investigation*. Nothing is arranged for you and no
+  connection is suggested. The board in the library shows what you've pinned.
+- **The timeline cord** — the night's events as cards, pegged to a string and dragged
+  into order. Only events you have evidence for exist. Each is *confirmed, reported,
+  unverified* or *contradicted*. Cards whose times the evidence fixes get a pencilled
+  “?” when out of order; undated cards (the vial swap, the car leaving) never do.
+- **The sealed will** — behind the hollow book. An aged document with clauses, a
+  struck-and-initialled amendment, witness signatures, a wax seal and a pencilled
+  margin note; examine it with the loupe, compare it with the attorney's letter, and
+  answer the will's questions (exists? benefits? genuine? who knew? who loses? why it
+  matters?) from what you have found.
+- **Case questions** — The Final Evening, The Family Motives, The Contradictory
+  Accounts, The Missing Connection, The Will. Each is checked against the truth when you
+  ask (“Test my reasoning”) with no hint about *why* it fails.
+- **The gathering** — tell Blanc you're ready and the family assembles in the living
+  room. The camera cuts between them as you build the accusation in seven beats:
+  the accused, motive, opportunity, the night (your cord), supporting evidence,
+  contradictions and the final discovery. Options come only from what you found;
+  nothing is pre-filled. You can withdraw at any point.
+- **Evaluation** (`systems/deduction.ts`) — identification, motive, timeline accuracy,
+  evidence relevance, contradictions and logic. Naming the right person is not enough
+  on its own; citing evidence you never found counts for nothing.
+- **Endings** — *The Complete Truth* (Blanc's reconstruction cuts to the rooms with
+  evidence held to camera and sepia re-enactments), *The Unfinished Case* (two variants),
+  *The Wrong Accusation* (Marta gets her own), *The Unresolved Mystery* — each with its
+  own dialogue, staging and reactions.
+- **The case file** — a stamped dossier: duration, rooms, interviews, evidence, missed
+  clues, contradictions, timeline accuracy, the accusation, a per-dimension breakdown,
+  and a rating from *Amateur Observer* to *Benoit Blanc Level*. Reports are kept
+  separately from saves and can be reviewed from the title.
+- **Replay** — new investigation (with confirmation; the previous save is moved to a
+  backup slot, never silently lost), a *fewer hints* mode in which Blanc only ever
+  offers his first, subtle observation, review of past case files, and returning to
+  the house after a verdict.
+- **Polish** — a ticking hall clock and crackling fires that grow louder as you
+  approach, original underscore for the gathering and each kind of ending, separate
+  master / music / ambience / effects levels in the pause screen and the notebook.
+
+Saves are now version 3; version 1 and 2 saves load with the new state set to empty.
+
 ## Architecture
 
 ```

@@ -41,6 +41,9 @@ export const STATEMENTS: Statement[] = [
   // Meg
   { id: 'S-meg-shouting', by: 'meg', summary: 'Heard Harlan and Ransom shouting in the study', quote: 'I heard Grandpa and Ransom yelling in the study. Like, really yelling. Then a door slammed.', confirmedBy: { any: [{ evidence: 'EV-10' }, { memory: 'M-argument' }] } },
   { id: 'S-meg-tuition', by: 'meg', summary: 'Harlan paid her school directly', quote: 'Grandpa paid my school directly. He told me so — he said he wanted to make sure it actually got there.', evidence: ['EV-16'], confirmedBy: { evidence: 'EV-16' } },
+  { id: 'S-meg-rain', by: 'meg', summary: 'The rain began around half past eleven', quote: 'It started pouring around half eleven. I know because Mom made me close the conservatory windows.' },
+  { id: 'S-ransom-stayed', by: 'ransom', summary: 'Admits he sat in his car on the estate until after the rain began', quote: 'I sat in my car and brooded. For a while. A long while. Then I drove off. Brooding isn’t a crime.', evidence: ['EV-15'], confirmedBy: { evidence: 'EV-15' } },
+  { id: 'S-ransom-knew', by: 'ransom', summary: 'Admits Harlan told him the will left everything to Marta', quote: 'He told me. Everything to the nurse. My grandfather’s idea of a birthday present to himself.', evidence: ['EV-20'], confirmedBy: { evidence: 'EV-20' } },
   // Richard
   { id: 'S-richard-close', by: 'richard', summary: 'Claims he and Harlan were “like father and son”', quote: 'Harlan and I were close. Practically father and son. No friction whatsoever.' },
   { id: 'S-richard-bed', by: 'richard', summary: 'In bed by half past eleven', quote: 'I was in bed by half past eleven. Linda will tell you. I sleep like a stone.' },
@@ -72,6 +75,7 @@ export const CONTRADICTIONS: ContradictionDef[] = [
   { id: 'C-walt-fired', title: 'Talking shop', claim: 'S-walt-business', against: [{ evidence: 'EV-18' }, { memory: 'M-record' }], tension: 'Walt says his father was thrilled with the business. Harlan had written his dismissal.', challenge: 'walt' },
   { id: 'C-joni-tuition', title: 'Every penny', claim: 'S-joni-tuition', against: [{ evidence: 'EV-16' }, { statement: 'S-meg-tuition' }], tension: 'Joni says she pays Meg’s tuition herself. Harlan was paying the school directly — and Joni was still collecting.', challenge: 'joni' },
   { id: 'C-richard-letter', title: 'Like father and son', claim: 'S-richard-close', against: [{ evidence: 'EV-17' }], tension: 'Richard claims no friction at all. Harlan’s letter gave him a deadline to confess something to Linda.', challenge: 'richard' },
+  { id: 'C-ransom-car', title: 'Home by half nine?', claim: 'S-ransom-left', against: [{ evidence: 'EV-15' }], tension: 'Ransom says he drove home after the cake. Ruts from a wide sports car were torn into the service drive after the rain began, near midnight.', challenge: 'ransom' },
   { id: 'C-marta-door', title: 'Out the front door', claim: 'S-marta-left', against: [{ evidence: 'EV-07' }, { evidence: 'EV-08' }], tension: 'Marta says she left by the front door. Someone small, in flat rubber soles, came down the trellis from Harlan’s window.', challenge: 'marta' },
 ];
 
