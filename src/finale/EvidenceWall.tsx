@@ -25,6 +25,24 @@ export const LINK_STYLE: Record<LinkType, { label: string; color: string; dash?:
   investigate: { label: 'Needs investigation', color: '#7a6a5a', dash: '2 6' },
 };
 
+let _cork: string | null = null;
+/** Cork texture painted once to a small canvas (far cheaper than an SVG noise filter). */
+function corkUrl() {
+  if (_cork) return _cork;
+  const c = document.createElement('canvas');
+  c.width = c.height = 160;
+  const g = c.getContext('2d')!;
+  g.fillStyle = '#a07e50';
+  g.fillRect(0, 0, 160, 160);
+  for (let i = 0; i < 3500; i++) {
+    const d = Math.random();
+    g.fillStyle = d > 0.5 ? `rgba(70,45,20,${Math.random() * 0.4})` : `rgba(210,180,130,${Math.random() * 0.3})`;
+    g.fillRect(Math.random() * 160, Math.random() * 160, 1 + Math.random() * 2, 1 + Math.random() * 2);
+  }
+  _cork = c.toDataURL('image/png');
+  return _cork;
+}
+
 const BOARD_W = 1600;
 const BOARD_H = 1000;
 
@@ -257,8 +275,7 @@ export function EvidenceWall() {
               width: BOARD_W,
               height: BOARD_H,
               transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})`,
-              background:
-                "radial-gradient(ellipse at 30% 30%, rgba(255,230,190,0.12), transparent 60%), url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.32  0 0 0 0 0.18  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' fill='%23a07e50'/><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+              background: `radial-gradient(ellipse at 30% 30%, rgba(255,230,190,0.12), transparent 60%), url(${corkUrl()})`,
               boxShadow: 'inset 0 0 0 14px #3a2416, inset 0 0 60px rgba(0,0,0,0.5)',
             }}
           >
