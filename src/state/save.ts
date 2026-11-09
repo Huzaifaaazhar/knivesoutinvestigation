@@ -45,7 +45,7 @@ async function tx<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBReq
 export function isValidSave(d: unknown): d is SaveData {
   if (!d || typeof d !== 'object') return false;
   const s = d as SaveData;
-  return s.version === 1 && !!s.player && Array.isArray(s.visited) && Array.isArray(s.notes) && typeof s.evidence === 'object';
+  return (s.version === 1 || s.version === 2) && !!s.player && Array.isArray(s.visited) && Array.isArray(s.notes) && typeof s.evidence === 'object';
 }
 
 export async function loadSave(): Promise<SaveData | null> {

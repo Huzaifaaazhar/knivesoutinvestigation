@@ -5,10 +5,13 @@ import { CHARACTERS, EVENTS } from '../data/case';
 import { EVIDENCE } from '../data/evidence';
 import { LEVEL_NAMES, LEVELS, ROOMS, placeName } from '../data/layout';
 import { portraitDataUrl } from './portraitImage';
+import { AssumptionInput, CompareSlip, ContradictionPage, MotivePage, NoteLegend, SUSPECTS, TestimonyPage, contradictionIds, testimonyIds, whereabouts } from './StoryPages';
+import { npcRt } from '../state/npcRuntime';
+import { nameOf } from '../state/story';
 import { manualSave, returnToTitle } from '../state/persistence';
 import { audio } from '../audio/audio';
 
-type Tab = 'case' | 'journal' | 'persons' | 'plan' | 'records';
+type Tab = 'case' | 'journal' | 'testimony' | 'contradictions' | 'persons' | 'motives' | 'plan' | 'records';
 interface Page {
   tab: Tab;
   node: ReactNode;
@@ -17,7 +20,10 @@ interface Page {
 const TABS: { id: Tab; label: string; color: string }[] = [
   { id: 'case', label: 'Case', color: '#632331' },
   { id: 'journal', label: 'Journal', color: '#66684d' },
+  { id: 'testimony', label: 'Testimony', color: '#1d2a4a' },
+  { id: 'contradictions', label: 'Conflicts', color: '#982b39' },
   { id: 'persons', label: 'Persons', color: '#171e2a' },
+  { id: 'motives', label: 'Motives', color: '#39271f' },
   { id: 'plan', label: 'Plan', color: '#2a4468' },
   { id: 'records', label: 'Records', color: '#b69a65' },
 ];
@@ -44,13 +50,36 @@ function PageTitle({ children, sub }: { children: ReactNode; sub?: string }) {
   );
 }
 
+const NOTE_TONE: Partial<Record<NoteEntry['kind'], string>> = {
+  evidence: 'text-blood',
+  contradiction: 'text-blood',
+  person: 'text-[#1d2a4a]',
+  statement: 'text-[#1d2a4a]',
+  milestone: 'text-burgundy',
+  motive: 'text-burgundy',
+  assumption: 'text-[#6a6560]',
+  behaviour: 'text-[#3a4a2a]',
+  memory: 'text-[#7a5a2a]',
+  relationship: 'text-[#5a3a7a]',
+};
+const NOTE_TAG: Partial<Record<NoteEntry['kind'], string>> = {
+  statement: 'testimony · unverified',
+  contradiction: '✕ contradiction',
+  assumption: 'my assumption',
+  behaviour: 'manner',
+  memory: 'memory',
+  relationship: 'relationship',
+  motive: 'motive?',
+};
+
 function NoteLine({ n }: { n: NoteEntry }) {
-  const tone = n.kind === 'evidence' ? 'text-blood' : n.kind === 'person' ? 'text-[#1d2a4a]' : n.kind === 'milestone' ? 'text-burgundy' : 'text-[#24304a]';
+  const tone = NOTE_TONE[n.kind] ?? 'text-[#24304a]';
   return (
     <motion.li initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative pl-1">
       <div className="font-mono text-[9.5px] uppercase tracking-widest text-ink/45">
         {n.at} · {placeName(n.room)}
         {n.kind === 'evidence' && <span className="ml-2 text-blood">● logged</span>}
+        {NOTE_TAG[n.kind] && <span className={`ml-2 ${n.kind === 'contradiction' ? 'text-blood' : ''}`}>· {NOTE_TAG[n.kind]}</span>}
       </div>
       <div className={`hand text-[1.3rem] leading-[1.12] ${tone}`}>{n.text}</div>
     </motion.li>
@@ -90,7 +119,24 @@ export function Notebook() {
   const narrow = useIsNarrow();
   const [dir, setDir] = useState(1);
   const [stamped, setStamped] = useState(0);
+  const [comparing, setComparing] = useState<string | null>(null);
+  const statements = useGame((s) => s.statements);
+  const contradictions = useGame((s) => s.contradictions);
+  const met = useGame((s) => s.met);
+  const personNotes = useGame((s) => s.personNotes);
+  const relOpened = useGame((s) => s.milestones.includes('opened-family-tree'));
   const state = useGame.getState();
+  const revisit = (npc: string) => {
+    const rt = npcRt[npc];
+    const s = useGame.getState();
+    if (!rt) return;
+    if (rt.room === s.player.room) s.toast(`${nameOf(npc)} is right here.`, 'info');
+    else {
+      s.setNav(rt.room);
+      s.toast(`${nameOf(npc)} was last seen in the ${placeName(rt.room)}. Follow the gold motes.`, 'info');
+    }
+    s.closeOverlay();
+  };
 
   const pages = useMemo<Page[]>(() => {
     const out: Page[] = [];
@@ -154,6 +200,8 @@ export function Notebook() {
         node: (
           <>
             {i === 0 && <PageTitle sub="Observations">Journal</PageTitle>}
+            {i === 0 && <NoteLegend />}
+            {i === 0 && <AssumptionInput />}
             {c.length ? (
               <ul className="space-y-3" data-testid="journal-page">
                 {c.map((n) => (
@@ -168,6 +216,20 @@ export function Notebook() {
         ),
       }),
     );
+    const padded = (tab: Tab, nodes: ReactNode[]) => {
+      nodes.forEach((node) => out.push({ tab, node }));
+      if (nodes.length % 2) out.push({ tab, node: <p className="hand mt-10 text-center text-2xl text-ink/20">—</p> });
+    };
+    // ── Testimony
+    const tIds = testimonyIds(statements);
+    const tChunks: string[][] = [];
+    for (let i = 0; i < Math.max(1, tIds.length); i += 4) tChunks.push(tIds.slice(i, i + 4));
+    padded('testimony', tChunks.map((c, i) => <TestimonyPage key={i} ids={c} first={i === 0} onCompare={setComparing} />));
+    // ── Contradictions
+    const cIds = contradictionIds(contradictions as Record<string, { ts: number }>);
+    const cChunks: string[][] = [];
+    for (let i = 0; i < Math.max(1, cIds.length); i += 2) cChunks.push(cIds.slice(i, i + 2));
+    padded('contradictions', cChunks.map((c, i) => <ContradictionPage key={i} ids={c} first={i === 0} onRevisit={revisit} />));
     // ── Persons
     const half = Math.ceil(CHARACTERS.length / 2);
     [CHARACTERS.slice(0, half), CHARACTERS.slice(half)].forEach((group, gi) =>
@@ -188,6 +250,13 @@ export function Notebook() {
                       <div className="font-title text-[15px] leading-tight text-ink">{c.name}</div>
                       <div className="font-ui text-[11px] text-ink/60">{c.role}</div>
                       <div className={`hand text-[1.1rem] leading-[1.05] ${known ? 'text-[#24304a]' : 'text-ink/30'}`}>{known ? c.note : 'Not yet studied.'}</div>
+                      {met.includes(c.id) && (
+                        <div className="font-mono text-[9px] uppercase tracking-[0.15em] text-ink/50">
+                          Spoken to · last seen: {whereabouts(c.id) ?? '—'}
+                          <button onClick={() => revisit(c.id)} className="ml-2 text-burgundy hover:underline">find</button>
+                        </div>
+                      )}
+                      {personNotes[c.id] && <div className="hand text-[1.05rem] leading-tight text-[#6a6560]">✎ {personNotes[c.id]}</div>}
                     </div>
                   </li>
                 );
@@ -197,6 +266,8 @@ export function Notebook() {
         ),
       }),
     );
+    // ── Motives
+    padded('motives', SUSPECTS.map((who, i) => <MotivePage key={who} who={who} first={i === 0} />));
     // ── Plan
     out.push({
       tab: 'plan',
@@ -283,7 +354,7 @@ export function Notebook() {
     out.push({ tab: 'records', node: <SettingsPage settings={settings} /> });
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notes, characters, visited, evidence, hasMap, lastSaved, settings, stamped]);
+  }, [notes, characters, visited, evidence, hasMap, lastSaved, settings, stamped, statements, contradictions, met, personNotes, relOpened]);
 
   const perView = narrow ? 1 : 2;
   const maxStart = pages.length - perView;
@@ -310,6 +381,8 @@ export function Notebook() {
   useEffect(() => {
     if (overlay !== 'notebook') return;
     const f = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) return;
       if (e.key === 'ArrowRight') go(start + perView);
       if (e.key === 'ArrowLeft') go(start - perView);
     };
@@ -381,6 +454,7 @@ export function Notebook() {
           </AnimatePresence>
         </div>
 
+        <AnimatePresence>{comparing && <CompareSlip key={comparing} statementId={comparing} onClose={() => setComparing(null)} />}</AnimatePresence>
         {/* page corners */}
         <button
           aria-label="Previous page"

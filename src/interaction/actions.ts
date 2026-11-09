@@ -3,10 +3,13 @@ import { DOOR_BY_ID, placeName } from '../data/layout';
 import { INTERACTABLE_BY_ID } from '../data/interactables';
 import { useGame, runtime } from '../state/store';
 import { audio } from '../audio/audio';
-import { doorIdOf, isDoorTarget } from './targeting';
+import { doorIdOf, isDoorTarget, isNpcTarget, npcIdOf } from './targeting';
+import { NPC_BY_ID } from '../data/npcs';
+import { MEMORY_BY_TRIGGER } from '../data/relations';
+import { npcStatus, openFamilyTree, startConversation, startMemory } from '../state/story';
 
 export function isAvailable(id: string): boolean {
-  if (isDoorTarget(id)) return true;
+  if (isDoorTarget(id) || isNpcTarget(id)) return true;
   const def = INTERACTABLE_BY_ID[id];
   if (!def) return false;
   const s = useGame.getState();
@@ -15,8 +18,15 @@ export function isAvailable(id: string): boolean {
   return true;
 }
 
-export function promptFor(id: string): { verb: string; name: string } | null {
+export function promptFor(id: string): { verb: string; name: string; observe?: boolean } | null {
   const s = useGame.getState();
+  if (isNpcTarget(id)) {
+    const npc = npcIdOf(id);
+    const met = s.met.includes(npc);
+    const st = npcStatus(npc);
+    const name = met ? NPC_BY_ID[npc].short : 'someone';
+    return { verb: st === 'occupied' ? `${name} is busy —` : `Speak to ${name}`, name: met ? NPC_BY_ID[npc].name : 'A stranger', observe: true };
+  }
   if (isDoorTarget(id)) {
     const d = DOOR_BY_ID[doorIdOf(id)];
     const st = s.doors[d.id];
@@ -35,6 +45,10 @@ export function promptFor(id: string): { verb: string; name: string } | null {
 
 export function interact(id: string) {
   const s = useGame.getState();
+  if (isNpcTarget(id)) {
+    startConversation(npcIdOf(id));
+    return;
+  }
   if (isDoorTarget(id)) {
     const d = DOOR_BY_ID[doorIdOf(id)];
     const st = s.doors[d.id];
@@ -71,10 +85,27 @@ export function interact(id: string) {
   const def = INTERACTABLE_BY_ID[id];
   if (!def || !isAvailable(id)) return;
   switch (def.kind) {
-    case 'observe':
+    case 'observe': {
       s.examine(id);
+      const mem = MEMORY_BY_TRIGGER[id];
+      if (mem && !s.memories.includes(mem.id)) {
+        s.toast(def.observation, 'info');
+        setTimeout(() => startMemory(mem.id), 900);
+        break;
+      }
       s.toast(def.observation, 'info');
       audio.play('click');
+      break;
+    }
+    case 'relations':
+      s.examine(id);
+      openFamilyTree();
+      audio.play('paper');
+      break;
+    case 'album':
+      s.examine(id);
+      useGame.setState({ overlay: 'album' });
+      audio.play('paper');
       break;
     case 'pickup':
       s.examine(id);

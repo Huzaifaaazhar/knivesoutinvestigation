@@ -6,6 +6,8 @@ import { PATHS, TREES } from '../data/furnishings';
 import { doorInterval } from '../systems/architecture';
 import { routeTo } from '../systems/navigation';
 import { audio } from '../audio/audio';
+import { npcList } from '../state/npcRuntime';
+import { NPC_BY_ID } from '../data/npcs';
 
 type Sheet = Level | 'grounds';
 const SHEETS: { id: Sheet; label: string }[] = [
@@ -42,6 +44,7 @@ export function FloorPlan() {
   const doors = useGame((s) => s.doors);
   const navTarget = useGame((s) => s.navTarget);
   const inventory = useGame((s) => s.inventory);
+  const met = useGame((s) => s.met);
   const here = ZONE_BY_ID[player.room] ? 'grounds' : player.level;
   const [sheet, setSheet] = useState<Sheet>(here);
   const [selected, setSelected] = useState<string | null>(null);
@@ -229,6 +232,18 @@ export function FloorPlan() {
                 </g>
               </g>
             )}
+
+            {/* people you've met, where they are now */}
+            {npcList()
+              .filter((n) => met.includes(n.id) && (sheet === 'grounds' ? !!ZONE_BY_ID[n.room] || n.room === 'garage' : n.level === sheet && !ZONE_BY_ID[n.room]))
+              .map((n) => (
+                <g key={n.id} transform={`translate(${n.x} ${n.z})`} pointerEvents="none" data-testid={`plan-npc-${n.id}`}>
+                  <circle r={sheet === 'grounds' ? 1.5 : 0.55} fill="#982b39" stroke="#f1e7d3" strokeWidth={sheet === 'grounds' ? 0.25 : 0.08} />
+                  <text y={sheet === 'grounds' ? -2 : -0.8} textAnchor="middle" fontSize={sheet === 'grounds' ? 1.6 : 0.6} fill="#f1e7d3" fontFamily="Inter, sans-serif">
+                    {NPC_BY_ID[n.id].short}
+                  </text>
+                </g>
+              ))}
 
             {/* compass */}
             <g transform={`translate(${bb.x0 + bb.w - (sheet === 'grounds' ? 6 : 2.2)} ${bb.z0 + (sheet === 'grounds' ? 6 : 2.2)}) scale(${sheet === 'grounds' ? 3 : 1})`} pointerEvents="none">

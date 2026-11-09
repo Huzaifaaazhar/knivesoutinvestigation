@@ -80,6 +80,13 @@ export function InteractionPrompt() {
             <span className="font-title text-[13px] italic text-gold">{p.name}</span>
           </>
         )}
+        {p.observe && !input.touch && (
+          <>
+            <span className="h-3 w-px bg-ivory/20" />
+            <Key k="Q" />
+            <span className="font-ui text-[12px] text-ivory/60">Observe</span>
+          </>
+        )}
       </motion.div>
     </div>
   );

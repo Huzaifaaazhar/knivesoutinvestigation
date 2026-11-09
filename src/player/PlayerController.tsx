@@ -14,7 +14,10 @@ import { collidersFor } from '../systems/colliders';
 import { isExploring, runtime, useGame } from '../state/store';
 import { audio, type Surface } from '../audio/audio';
 import { input, consumeLook } from './input';
-import { pickTarget } from '../interaction/targeting';
+import { isNpcTarget, npcIdOf, npcTarget, pickTarget } from '../interaction/targeting';
+import { npcList } from '../state/npcRuntime';
+import { NPC_BY_ID } from '../data/npcs';
+import { advance, cancelPresent, endConversation, endMemory, observe, recordObservation } from '../state/story';
 import { interact, isAvailable } from '../interaction/actions';
 
 const EYE = 1.65;
@@ -54,10 +57,22 @@ export function PlayerController() {
       const s = useGame.getState();
       if (s.phase !== 'playing') return;
       const k = e.key.toLowerCase();
+      // typing in the notebook or on the family tree must not trigger shortcuts
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && k !== 'escape') return;
       if (e.type === 'keydown') {
         if (s.overlay === 'none') input.keys.add(e.code);
         if (e.repeat) return;
         if (k === 'escape') {
+          if (s.overlay === 'conversation') {
+            if (s.conversation?.mode === 'present') cancelPresent();
+            else endConversation();
+            return;
+          }
+          if (s.overlay === 'flashback') {
+            endMemory();
+            return;
+          }
           if (s.overlay === 'none') s.openOverlay('pause');
           else s.closeOverlay();
           return;
@@ -82,6 +97,14 @@ export function PlayerController() {
           return;
         }
         if (k === 'e' && s.overlay === 'none') input.interactQueued = true;
+        if (k === 'q' && s.overlay === 'none') {
+          if (s.observing) recordObservation();
+          else if (isNpcTarget(s.target)) observe(npcIdOf(s.target!));
+        }
+        if ((k === ' ' || k === 'enter') && s.overlay === 'conversation' && s.conversation?.mode === 'lines') {
+          e.preventDefault();
+          advance();
+        }
       } else {
         input.keys.delete(e.code);
       }
@@ -160,6 +183,11 @@ export function PlayerController() {
     }
 
     const exploring = s.overlay === 'none';
+    // conversations and memories take over the camera
+    if (s.overlay === 'conversation' || s.overlay === 'flashback') {
+      vel.current.set(0, 0);
+      return;
+    }
     if (exploring) {
       clockAcc.current += dt;
       if (clockAcc.current >= 1) {
@@ -209,7 +237,8 @@ export function PlayerController() {
     vel.current.x = THREE.MathUtils.damp(vel.current.x, wantX, accel, dt);
     vel.current.y = THREE.MathUtils.damp(vel.current.y, wantZ, accel, dt);
 
-    const set = collidersFor(runtime.level, s.doors);
+    const base = collidersFor(runtime.level, s.doors);
+    const set = { ...base, circles: [...base.circles, ...npcList().filter((n) => n.level === runtime.level).map((n) => ({ x: n.x, z: n.z, r: 0.3 }))] };
     const next = move(runtime.x, runtime.z, vel.current.x * dt, vel.current.y * dt, set);
     const moved = Math.hypot(next.x - runtime.x, next.z - runtime.z);
     runtime.x = next.x;
@@ -258,7 +287,9 @@ export function PlayerController() {
     if (targetTimer.current <= 0 && exploring) {
       targetTimer.current = 0.1;
       const f = new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(runtime.pitch, runtime.yaw, 0, 'YXZ'));
-      const t = pickTarget({ x: runtime.x, y: runtime.y + EYE, z: runtime.z, fx: f.x, fy: f.y, fz: f.z, level: runtime.level }, isAvailable);
+      const people = npcList().map((n) => ({ id: npcTarget(n.id), x: n.x, y: n.y + NPC_BY_ID[n.id].look.height - 0.25, z: n.z, level: n.level, range: 2.8 }));
+      const t = pickTarget({ x: runtime.x, y: runtime.y + EYE, z: runtime.z, fx: f.x, fy: f.y, fz: f.z, level: runtime.level }, isAvailable, people);
+      if (s.observing && t !== npcTarget(s.observing.npc)) useGame.setState({ observing: null });
       s.setTarget(t);
     }
     if (input.interactQueued) {

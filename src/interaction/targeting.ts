@@ -20,6 +20,9 @@ const DOOR_PREFIX = 'door:';
 export const doorTarget = (id: string) => `${DOOR_PREFIX}${id}`;
 export const isDoorTarget = (t: string | null) => !!t && t.startsWith(DOOR_PREFIX);
 export const doorIdOf = (t: string) => t.slice(DOOR_PREFIX.length);
+export const npcTarget = (id: string) => `npc:${id}`;
+export const isNpcTarget = (t: string | null) => !!t && t.startsWith('npc:');
+export const npcIdOf = (t: string) => t.slice(4);
 
 let candidates: Candidate[] | null = null;
 function allCandidates(): Candidate[] {
@@ -42,11 +45,11 @@ export interface View {
   level: Level;
 }
 
-export function pickTarget(v: View, available: (id: string) => boolean): string | null {
+export function pickTarget(v: View, available: (id: string) => boolean, extra: Candidate[] = []): string | null {
   const segs = staticColliders()[v.level].segs;
   let best: string | null = null;
   let bestScore = Infinity;
-  for (const c of allCandidates()) {
+  for (const c of [...allCandidates(), ...extra]) {
     if (c.level !== v.level) continue;
     const dx = c.x - v.x;
     const dy = c.y - v.y;

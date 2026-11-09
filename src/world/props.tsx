@@ -823,6 +823,48 @@ export const Latch: FC<P> = () => (
   </group>
 );
 
+export const TreeFrame: FC<P> = () => {
+  const map = cached('tree', () =>
+    canvasTex(256, 192, (g) => {
+      g.fillStyle = '#e4d6b8';
+      g.fillRect(0, 0, 256, 192);
+      g.strokeStyle = '#3a2a1a';
+      g.lineWidth = 1.5;
+      const nodes: [number, number][] = [[128, 22], [128, 60], [50, 104], [128, 104], [200, 104], [36, 152], [216, 152]];
+      [[0, 1], [1, 2], [1, 3], [1, 4], [2, 5], [4, 6]].forEach(([a, b]) => {
+        g.beginPath();
+        g.moveTo(nodes[a][0], nodes[a][1]);
+        g.lineTo(nodes[b][0], nodes[b][1]);
+        g.stroke();
+      });
+      g.fillStyle = '#632331';
+      nodes.forEach(([x, y]) => g.fillRect(x - 16, y - 7, 32, 14));
+      g.fillStyle = '#2a1a12';
+      g.font = 'italic 14px serif';
+      g.fillText('The Thrombeys', 82, 186);
+    }),
+  );
+  return (
+    <group rotation={[-0.12, 0, 0]}>
+      <B p={[0, 0.2, 0]} s={[0.46, 0.38, 0.02]} m={M.gold()} />
+      <mesh position={[0, 0.2, 0.012]}>
+        <planeGeometry args={[0.4, 0.32]} />
+        <meshStandardMaterial map={map} roughness={0.9} />
+      </mesh>
+      <B p={[0, 0.12, -0.08]} s={[0.03, 0.25, 0.01]} r={[0.5, 0, 0]} m={M.darkwood()} />
+    </group>
+  );
+};
+
+export const Album: FC<P> = () => (
+  <group>
+    <B p={[0, 0.03, 0]} s={[0.36, 0.06, 0.28]} m={M.leather('#3a1a12')} />
+    <B p={[0.005, 0.03, 0.002]} s={[0.35, 0.05, 0.27]} m={M.ivory()} />
+    <B p={[0, 0.061, 0]} s={[0.36, 0.004, 0.28]} m={M.leather('#4a2016')} />
+    <B p={[0, 0.064, 0]} s={[0.12, 0.002, 0.04]} m={M.gold()} />
+  </group>
+);
+
 const ArmchairProp: FC<P> = () => <Armchair c="#4a3a2a" />;
 const CarProp: FC<P> = () => <Car c="#2a3a2a" vintage />;
 const DaybedProp: FC<P> = () => <Daybed />;
@@ -872,4 +914,6 @@ export const VISUALS: Record<VisualKey, VisualEntry> = {
   plaque: { C: Plaque, center: [0, 0.1, 0], radius: 0.4 },
   fountain: { C: Fountain, center: [0, 1.2, 0], radius: 2.6 },
   latch: { C: Latch, center: [0, -0.05, 0], radius: 0.22 },
+  treeFrame: { C: TreeFrame, center: [0, 0.2, 0], radius: 0.3 },
+  album: { C: Album, center: [0, 0.03, 0], radius: 0.25 },
 };

@@ -160,6 +160,33 @@ export const EVIDENCE: EvidenceDef[] = [
     relatedCharacters: ['ransom'],
     relatedEvents: ['ransom-argument'],
   },
+  {
+    id: 'EV-16',
+    name: 'Tuition Statement',
+    description: 'Meg’s school statement for the autumn term. Two payments received for the same fees — one from Harlan directly, one from Joni.',
+    category: 'document',
+    location: 'guestB',
+    relatedCharacters: ['joni', 'meg', 'harlan'],
+    relatedEvents: [],
+  },
+  {
+    id: 'EV-17',
+    name: 'Harlan’s Unsent Letter to Richard',
+    description: 'A letter in Harlan’s hand, never posted: Richard must tell Linda about his affair by the end of the week, or Harlan will.',
+    category: 'document',
+    location: 'harlan',
+    relatedCharacters: ['richard', 'linda', 'harlan'],
+    relatedEvents: ['party'],
+  },
+  {
+    id: 'EV-18',
+    name: 'Dismissal Memo',
+    description: 'A memo on Blood Like Wine Publishing letterhead relieving Walt Thrombey of his position. Signed by Harlan.',
+    category: 'document',
+    location: 'library',
+    relatedCharacters: ['walt', 'harlan'],
+    relatedEvents: ['party'],
+  },
 ];
 
 export const EVIDENCE_BY_ID: Record<string, EvidenceDef> = Object.fromEntries(EVIDENCE.map((e) => [e.id, e]));

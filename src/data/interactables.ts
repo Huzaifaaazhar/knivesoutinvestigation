@@ -43,7 +43,9 @@ export type VisualKey =
   | 'tyreMarks'
   | 'plaque'
   | 'fountain'
-  | 'latch';
+  | 'latch'
+  | 'treeFrame'
+  | 'album';
 
 export interface Hotspot {
   id: string;
@@ -74,7 +76,7 @@ export interface InteractableDef {
   /** Focus point used for targeting and prompt anchoring. */
   pos: [number, number, number];
   verb: string;
-  kind: 'inspect' | 'document' | 'observe' | 'portrait' | 'pickup';
+  kind: 'inspect' | 'document' | 'observe' | 'portrait' | 'pickup' | 'relations' | 'album';
   /** Placement of a visual in the world (omit when the object is part of the furniture). */
   model?: { visual: VisualKey; pos: [number, number, number]; rotY?: number; props?: Record<string, unknown> };
   /** Visual used in the inspection view, if different from the world model. */
@@ -769,6 +771,121 @@ export const INTERACTABLES: InteractableDef[] = [
       { id: 'ruts', label: 'Ruts', detail: 'Wheel-spin. Mud thrown backward in fans. Whoever drove off was angry.', at: [0, 0.02, 0], key: true },
       { id: 'width', label: 'Track width', detail: 'Wide wheelbase — a sports car, not the family saloon.', at: [0.8, 0.02, -0.8], key: true },
     ],
+  },
+
+  // ───────────── Part 2: family papers ─────────────
+  {
+    id: 'tuition-statement',
+    name: 'School Statement',
+    room: 'guestB',
+    level: 1,
+    pos: [12.3, U + 1.05, 1.45],
+    verb: 'Read',
+    kind: 'document',
+    model: { visual: 'letter', pos: [12.3, U + 1.03, 1.5], rotY: 0.2 },
+    evidence: 'EV-16',
+    observation: 'Meg’s school statement, left on the dresser. The same fees were paid twice.',
+    document: {
+      paper: 'ledger',
+      heading: 'HARTWELL ACADEMY — STATEMENT OF ACCOUNT · AUTUMN TERM',
+      body: [
+        '| DATE | DESCRIPTION | PAYER | AMOUNT |',
+        '| Aug 28 | Tuition & boarding | [[harlan|H. Thrombey (direct)]] | $38,400 |',
+        '| Sep 02 | Tuition & boarding | [[joni|J. Thrombey]] | $38,400 |',
+        '| Sep 09 | [[refund|Overpayment — refunded to J. Thrombey]] | — | ($38,400) |',
+        '| — | [[note|“Paid direct from now on, so it gets there.” — H.]] | — | — |',
+      ],
+    },
+    hotspots: [
+      { id: 'harlan', label: 'Paid by Harlan', detail: 'Harlan paid the school directly, in full.', key: true },
+      { id: 'joni', label: 'Paid by Joni', detail: 'Joni paid the same fees — with money Harlan had sent her for the purpose.', key: true },
+      { id: 'refund', label: 'Refund', detail: 'The school refunded the duplicate payment to Joni. She kept it.', key: true },
+      { id: 'note', label: 'Harlan’s note', detail: 'Pencilled in Harlan’s hand in the margin. He knew.' },
+    ],
+  },
+  {
+    id: 'richard-letter',
+    name: 'Unsent Letter',
+    room: 'harlan',
+    level: 1,
+    pos: [-13.55, U + 0.72, 9.3],
+    verb: 'Open drawer',
+    kind: 'document',
+    model: { visual: 'letter', pos: [-13.6, U + 0.63, 9.32], rotY: -0.3 },
+    evidence: 'EV-17',
+    observation: 'In Harlan’s nightstand drawer: a letter to Richard he never sent.',
+    document: {
+      paper: 'note',
+      body: [
+        '[[to|Richard —]]',
+        'I have been made aware of your [[affair|arrangement in the city]]. I do not intend to discuss its particulars; I find I do not have the stomach for them.',
+        '[[deadline|You will tell Linda yourself, by the end of the week. If you do not, I will.]] She deserves to hear it from a coward rather than from her father.',
+        'You may consider this the kindest thing I have ever done for you.',
+      ],
+      signature: '— H.T.',
+      date: '[[date|Dated three days before the party]]',
+    },
+    hotspots: [
+      { id: 'to', label: 'Addressed to Richard', detail: 'Linda’s husband. Harlan’s son-in-law.' },
+      { id: 'affair', label: 'An “arrangement”', detail: 'Richard has been having an affair. Harlan found out.', key: true },
+      { id: 'deadline', label: 'The deadline', detail: 'The end of the week. Harlan died before it arrived.', key: true },
+      { id: 'date', label: 'Date', detail: 'Three days before the party — so the deadline fell days after it.', key: true },
+      { id: 'signature', label: 'Signature', detail: 'Harlan’s initials, pressed hard enough to tear the paper slightly.' },
+    ],
+  },
+  {
+    id: 'dismissal-memo',
+    name: 'Publishing Memo',
+    room: 'library',
+    level: 0,
+    pos: [8.3, 0.85, 6.5],
+    verb: 'Read',
+    kind: 'document',
+    model: { visual: 'letter', pos: [8.25, 0.79, 6.45], rotY: 0.5 },
+    evidence: 'EV-18',
+    observation: 'A memo on publishing-house letterhead, left on the library table: Walt’s dismissal.',
+    document: {
+      paper: 'letter',
+      heading: 'BLOOD LIKE WINE PUBLISHING · OFFICE OF THE FOUNDER',
+      date: '[[date|To take effect on the first of next month]]',
+      body: [
+        'To the Board,',
+        '[[fired|Effective the first of next month, Walter Thrombey is relieved of his duties as Chief Executive.]] An interim head will be appointed from within.',
+        '[[rights|No adaptation rights to any title will be licensed in my lifetime, or after it.]] This is not open to discussion, Walter.',
+        'This decision is mine alone and is made with love, which is not the same thing as approval.',
+      ],
+      signature: 'Harlan Thrombey',
+    },
+    hotspots: [
+      { id: 'fired', label: 'Relieved of duties', detail: 'Harlan removed Walt as head of the publishing house.', key: true },
+      { id: 'rights', label: 'Adaptation rights', detail: 'Walt’s television plans — vetoed permanently.', key: true },
+      { id: 'date', label: 'Effective date', detail: 'Next month. Walt knew this was coming when he told everyone he was thriving.' },
+      { id: 'signature', label: 'Signature', detail: 'Harlan’s full signature, in the brown ink he kept for business.' },
+    ],
+  },
+  {
+    id: 'family-tree',
+    name: 'Framed Family Tree',
+    room: 'dining',
+    level: 0,
+    pos: [7.25, 1.2, -7.45],
+    verb: 'Study',
+    kind: 'relations',
+    model: { visual: 'treeFrame', pos: [7.25, 0.92, -7.62] },
+    observation: 'A family tree drawn up for the birthday party, framed on the sideboard. Room in the margins for notes.',
+    grants: { milestone: 'opened-family-tree' },
+  },
+  {
+    id: 'photo-album',
+    name: 'Photograph Album',
+    room: 'living',
+    level: 0,
+    pos: [-12.7, 0.55, 5.1],
+    verb: 'Open',
+    kind: 'album',
+    model: { visual: 'album', pos: [-12.7, 0.46, 5.1], rotY: 0.3 },
+    observation: 'A leather photograph album on the coffee table. Harlan wrote on the back of every picture.',
+    grants: { milestone: 'opened-album' },
   },
 ];
 

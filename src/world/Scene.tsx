@@ -11,6 +11,9 @@ import { Doors } from './Doors';
 import { M, worldPlane } from './kit';
 import { runtime, useGame } from '../state/store';
 import { routeTo, type Waypoint } from '../systems/navigation';
+import { NPCs } from './npc/NPCs';
+import { ConversationCamera, FlashbackStage, PlayerAvatar } from './npc/Cinematics';
+import { MEMORY_BY_ID } from '../data/relations';
 
 // ───────────────────────── Visibility ─────────────────────────
 
@@ -471,7 +474,11 @@ function GuideTrail() {
 export function World() {
   const room = useGame((s) => s.player.room);
   const phase = useGame((s) => s.phase);
-  const vis = phase === 'playing' ? visibleFor(room) : { levels: new Set([0]), exterior: true };
+  const memoryRoom = useGame((s) => {
+    const a = s.flashback ? MEMORY_BY_ID[s.flashback.id].actors[0] : null;
+    return a ? locate(a.x, a.z, a.level) : null;
+  });
+  const vis = phase === 'playing' ? visibleFor(memoryRoom ?? room) : { levels: new Set([0]), exterior: true };
   const byLevel = useMemo(() => {
     const out: Record<string, Placement[]> = { exterior: [], '-1': [], '0': [], '1': [] };
     for (const p of FURNISHINGS) {
@@ -509,6 +516,10 @@ export function World() {
       </group>
       <Rain />
       <GuideTrail />
+      <NPCs />
+      <PlayerAvatar />
+      <ConversationCamera />
+      <FlashbackStage />
     </>
   );
 }

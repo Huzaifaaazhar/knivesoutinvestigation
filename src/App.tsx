@@ -16,6 +16,10 @@ import { InspectionOverlay } from './inspection/InspectionOverlay';
 import { Notebook } from './notebook/Notebook';
 import { EvidenceFolder } from './evidence/EvidenceFolder';
 import { FloorPlan } from './map/FloorPlan';
+import { ConversationUI, ObserveCard } from './ui/Conversation';
+import { FlashbackUI } from './ui/Flashback';
+import { FamilyTree } from './relations/FamilyTree';
+import { Album } from './relations/Album';
 
 export default function App() {
   usePersistence();
@@ -29,7 +33,8 @@ export default function App() {
     return t;
   });
   const playing = phase === 'playing';
-  const dimmed = playing && overlay !== 'none';
+  const cinematic = overlay === 'conversation' || overlay === 'flashback';
+  const dimmed = playing && overlay !== 'none' && !cinematic;
 
   useEffect(() => {
     // keep the browser from scrolling or zooming the page
@@ -40,10 +45,13 @@ export default function App() {
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-shadow">
-      <div className={`absolute inset-0 transition-[filter] duration-500 ${dimmed ? 'blur-[3px] brightness-[0.45] saturate-50' : ''}`} data-testid="world">
+      <div
+        className={`absolute inset-0 transition-[filter] duration-700 ${dimmed ? 'blur-[3px] brightness-[0.45] saturate-50' : ''} ${overlay === 'flashback' ? 'sepia-[0.85] contrast-[1.1] brightness-[0.95]' : ''}`}
+        data-testid="world"
+      >
         <Canvas
           dpr={quality === 'high' ? [1, 1.75] : [0.75, 1]}
-          frameloop={dimmed && overlay !== 'pause' ? 'demand' : 'always'}
+          frameloop={dimmed && overlay !== 'pause' && overlay !== 'relations' && overlay !== 'album' ? 'demand' : 'always'}
           camera={{ fov: 68, near: 0.05, far: 600, position: [0, 20, 150] }}
           gl={{ antialias: quality === 'high', powerPreference: 'high-performance' }}
           onCreated={({ gl }) => {
@@ -67,6 +75,7 @@ export default function App() {
           <RoomCard />
           <InteractionPrompt />
           <CornerHint />
+          <ObserveCard />
           <FirstSteps />
           {touch && <TouchControls />}
         </>
@@ -79,6 +88,10 @@ export default function App() {
         {playing && overlay === 'folder' && <EvidenceFolder key="folder" />}
         {playing && overlay === 'map' && <FloorPlan key="map" />}
         {playing && overlay === 'pause' && <PauseMenu key="pause" />}
+        {playing && overlay === 'conversation' && <ConversationUI key="conversation" />}
+        {playing && overlay === 'flashback' && <FlashbackUI key="flashback" />}
+        {playing && overlay === 'relations' && <FamilyTree key="relations" />}
+        {playing && overlay === 'album' && <Album key="album" />}
       </AnimatePresence>
 
       <Opening />

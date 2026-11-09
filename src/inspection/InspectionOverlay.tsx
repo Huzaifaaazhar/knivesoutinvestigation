@@ -10,6 +10,8 @@ import { placeName } from '../data/layout';
 import { keyHotspots, useGame } from '../state/store';
 import { VISUALS } from '../world/props';
 import { DocumentView } from './DocumentView';
+import { MEMORY_BY_TRIGGER } from '../data/relations';
+import { startMemory } from '../state/story';
 import { audio } from '../audio/audio';
 
 /** Stable empty list: a fresh [] in a selector would re-render forever. */
@@ -116,6 +118,7 @@ export function InspectionOverlay() {
   });
   const [active, setActive] = useState<string | null>(null);
   const [loupe, setLoupe] = useState(true);
+  const memories = useGame((s) => s.memories);
   if (overlay !== 'inspect' || !id) return null;
   const def = INTERACTABLE_BY_ID[id];
   const hotspots = def.hotspots ?? [];
@@ -124,6 +127,8 @@ export function InspectionOverlay() {
   const ev = def.evidence ? EVIDENCE_BY_ID[def.evidence] : null;
   const canCollect = !!ev && !collected && (keySeen > 0 || keys.length === 0);
   const activeHs = hotspots.find((h) => h.id === active);
+  const memory = MEMORY_BY_TRIGGER[id];
+  const memorySeen = memory ? memories.includes(memory.id) : true;
   const onDetail = (hid: string) => {
     setActive(hid);
     if (!seen.includes(hid)) audio.play('pencil');
@@ -196,7 +201,16 @@ export function InspectionOverlay() {
             </motion.div>
           </AnimatePresence>
         </div>
-        <div className="flex shrink-0 items-center gap-4">
+        <div className="flex shrink-0 flex-wrap items-center gap-4">
+          {memory && !memorySeen && (
+            <button
+              data-testid="remember"
+              onClick={() => startMemory(memory.id)}
+              className="border border-gold/60 px-4 py-2.5 font-display text-sm italic text-gold transition hover:bg-gold/10"
+            >
+              Let the memory surface…
+            </button>
+          )}
           {hotspots.length > 0 && (
             <div className="font-mono text-[11px] text-ivory/50" data-testid="detail-count">
               Details noticed <span className="text-gold">{seen.filter((s) => hotspots.some((h) => h.id === s)).length}</span> / {hotspots.length}

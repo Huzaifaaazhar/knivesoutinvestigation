@@ -8,9 +8,11 @@ import { INTERACTABLE_BY_ID } from '../data/interactables';
 import { EVIDENCE_BY_ID } from '../data/evidence';
 import { CHARACTER_BY_ID } from '../data/case';
 import { audio } from '../audio/audio';
+import type { MotiveCategory } from '../systems/conditions';
+import type { Line, ReactionKind } from '../systems/dialogue';
 
 export type Phase = 'boot' | 'title' | 'intro' | 'invitation' | 'playing';
-export type Overlay = 'none' | 'notebook' | 'folder' | 'map' | 'inspect' | 'pause';
+export type Overlay = 'none' | 'notebook' | 'folder' | 'map' | 'inspect' | 'pause' | 'conversation' | 'flashback' | 'relations' | 'album';
 
 export interface Settings {
   volume: number;
@@ -36,7 +38,21 @@ export const DEFAULT_SETTINGS: Settings = {
   headBob: true,
 };
 
-export type NoteKind = 'arrival' | 'room' | 'observation' | 'detail' | 'evidence' | 'person' | 'milestone';
+export type NoteKind =
+  | 'arrival'
+  | 'room'
+  | 'observation'
+  | 'detail'
+  | 'evidence'
+  | 'person'
+  | 'milestone'
+  | 'statement'
+  | 'behaviour'
+  | 'contradiction'
+  | 'relationship'
+  | 'memory'
+  | 'motive'
+  | 'assumption';
 
 export interface NoteEntry {
   id: string;
@@ -45,6 +61,43 @@ export interface NoteEntry {
   room: string;
   at: string;
   ts: number;
+  /** Character the entry is about, if any. */
+  who?: string;
+  /** Linked statement / contradiction / evidence ids. */
+  refs?: string[];
+}
+
+export interface Stamp {
+  at: string;
+  ts: number;
+}
+
+export interface MotiveRecord {
+  category: MotiveCategory | null;
+  supporting: string[];
+  contradicting: string[];
+  related: string[];
+  confidence: number;
+  questions: string;
+}
+
+export interface Conversation {
+  npc: string;
+  queue: Line[];
+  index: number;
+  mode: 'lines' | 'hub' | 'present' | 'leaving';
+  /** Where to go once the queued lines are done. */
+  then: 'hub' | 'end';
+  reaction?: ReactionKind;
+  /** Indices of lines whose body language has been written down. */
+  noted: number[];
+  /** Topic most recently asked, for highlighting. */
+  topic?: string;
+}
+
+export interface FlashbackState {
+  id: string;
+  index: number;
 }
 
 export interface EvidenceState {
@@ -87,8 +140,24 @@ export const runtime = {
   teleport: null as null | { x: number; z: number; level: Level; yaw?: number },
 };
 
-export interface SaveData {
-  version: 1;
+export interface StorySave {
+  met: string[];
+  statements: Record<string, Stamp>;
+  discussed: string[];
+  flags: string[];
+  contradictions: Record<string, Stamp & { via?: string }>;
+  relationships: string[];
+  relNotes: Record<string, string>;
+  relMarked: string[];
+  personNotes: Record<string, string>;
+  motives: Record<string, MotiveRecord>;
+  motiveLeads: string[];
+  hintsUsed: Record<string, number>;
+  memories: string[];
+}
+
+export interface SaveData extends Partial<StorySave> {
+  version: 1 | 2;
   savedAt: number;
   player: PlayerSnap;
   visited: string[];
@@ -110,7 +179,10 @@ export interface DoorState {
   unlocked: boolean;
 }
 
-interface GameState {
+interface GameState extends StorySave {
+  conversation: Conversation | null;
+  flashback: FlashbackState | null;
+  observing: { npc: string; text: string } | null;
   phase: Phase;
   overlay: Overlay;
   inspecting: string | null;
@@ -152,7 +224,7 @@ interface GameState {
   dismissToast: (id: number) => void;
   updateSettings: (s: Partial<Settings>) => void;
   tick: (dt: number) => void;
-  addNote: (kind: NoteKind, text: string, room?: string) => void;
+  addNote: (kind: NoteKind, text: string, room?: string, extra?: { who?: string; refs?: string[] }) => void;
   newGame: () => void;
   hydrate: (d: SaveData) => void;
   serialize: () => SaveData;
@@ -198,6 +270,28 @@ function freshState() {
     lastSaved: null,
     dirty: 0,
     roomCard: null,
+    ...freshStory(),
+    conversation: null,
+    flashback: null,
+    observing: null,
+  };
+}
+
+export function freshStory(): StorySave {
+  return {
+    met: [],
+    statements: {},
+    discussed: [],
+    flags: [],
+    contradictions: {},
+    relationships: [],
+    relNotes: {},
+    relMarked: [],
+    personNotes: {},
+    motives: {},
+    motiveLeads: [],
+    hintsUsed: {},
+    memories: [],
   };
 }
 
@@ -226,7 +320,7 @@ export const useGame = create<GameState>((set, get) => ({
   },
   setPlayer: (player) => set({ player }),
 
-  addNote: (kind, text, room) => {
+  addNote: (kind, text, room, extra) => {
     const s = get();
     const entry: NoteEntry = {
       id: `n${Date.now().toString(36)}${noteSeq++}`,
@@ -235,6 +329,7 @@ export const useGame = create<GameState>((set, get) => ({
       room: room ?? s.player.room,
       at: gameClock(s.playSeconds),
       ts: Date.now(),
+      ...(extra ?? {}),
     };
     set({ notes: [...s.notes, entry], dirty: s.dirty + 1 });
   },
@@ -376,8 +471,11 @@ export const useGame = create<GameState>((set, get) => ({
   hydrate: (d) => {
     Object.assign(runtime, { x: d.player.x, y: d.player.y, z: d.player.z, yaw: d.player.yaw, pitch: d.player.pitch, level: d.player.level, room: d.player.room });
     runtime.teleport = { x: d.player.x, z: d.player.z, level: d.player.level, yaw: d.player.yaw };
+    const story = freshStory();
+    for (const k of Object.keys(story) as (keyof StorySave)[]) if (d[k] !== undefined) (story as any)[k] = d[k];
     set({
       ...freshState(),
+      ...story,
       player: d.player,
       visited: d.visited,
       doors: { ...initialDoors(), ...d.doors },
@@ -396,8 +494,11 @@ export const useGame = create<GameState>((set, get) => ({
   },
   serialize: () => {
     const s = get();
+    const story = freshStory();
+    for (const k of Object.keys(story) as (keyof StorySave)[]) (story as any)[k] = s[k];
     return {
-      version: 1,
+      ...story,
+      version: 2,
       savedAt: Date.now(),
       player: { x: runtime.x, y: runtime.y, z: runtime.z, yaw: runtime.yaw, pitch: runtime.pitch, level: runtime.level, room: runtime.room },
       visited: s.visited,

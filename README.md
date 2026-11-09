@@ -76,6 +76,61 @@ Inside the notebook use `←` / `→` or the page corners; the ribbons jump betw
   muffles indoors, wind, a low drone, distant thunder with lightning, a sparse
   piano-like motif, and foley for footsteps per surface, doors, locks, paper and pencil.
 
+## Part 2 — The Family
+
+The estate is occupied. Eight people — **Benoit Blanc, Marta Cabrera, Ransom, Linda,
+Richard, Walt, Joni and Meg** — live in actual rooms, walk between them through real
+doorways and up the stairs, and are spoken to *in place*. Harlan appears in portraits,
+documents, a recorded dictation, the photograph album and staged memories.
+
+- **Encounters** — look at someone: `E` speaks, `Q` observes (their body language,
+  which you can write down). People idle, glance around, pace, lean on the mantel, sit,
+  talk on the phone; they turn to face you and gesture as they talk, and their faces
+  (brows, eyes, mouth) follow their mood. Figures are stylised and original, not
+  actor likenesses.
+- **Conversations** — the camera cuts between close-ups and over-the-shoulder shots
+  of your own figure, in the real room; letterbox bars, film subtitles and a small
+  choice panel. Leave at any time and come back later.
+- **Interrogation** — questions about Harlan, the family, the evening, rooms,
+  relationships, documents and events, unlocked by evidence, other interviews,
+  memories and relationships. Challenges appear only once a contradiction is marked.
+- **Presenting evidence** — open the manila folder mid-conversation and show
+  anything you've logged. Reactions depend on the item, whether you've examined it,
+  what that person knows and has already said: acknowledgement, surprise,
+  defensiveness, denial, explanation, refusal — or a changed account. Irrelevant
+  evidence gets that character's own deflection, never a confession.
+- **Contradiction engine** — testimony is filed in the notebook as *confirmed*,
+  *unverified* or *contradicted*. When you hold both halves of a conflict, the
+  statement gets a red “?” in the margin — but you must choose what it conflicts with
+  (another statement, evidence, or a memory) using **Compare…**. Presenting the right
+  evidence to the person who lied also exposes it.
+- **Relationships** — the framed family tree (dining room) and Harlan's photograph
+  album (living room). Discovered connections are drawn in coloured pencil; unknown
+  ones show as faint “?”s; every line and person can be annotated and marked.
+- **Motives** — a worksheet per suspect in the notebook: motive, supporting and
+  contradicting evidence, related people, confidence, unresolved questions. Motive
+  leads appear only as you uncover them.
+- **Schedules** — where people are depends on how far the investigation has got
+  (only ever moving forward with discoveries) plus a slow drift between posts as the
+  in-world clock runs. Busy and unwilling states lift on their own or through
+  discoveries; nobody can become unreachable. Met characters appear on the floor plan,
+  and the notebook can lead you to them.
+- **Blanc** — at the crime scene first, later the library, terrace and hall. Ask him
+  for a nudge and he gives a subtle observation, then a lead, then a specific thing to
+  reconsider — only when asked.
+- **Memories** — five optional flashbacks (the Go board, the record player, the
+  seating card, the album, Harlan's letter) staged in sepia in the actual rooms.
+- **Notebook** — new Testimony, Conflicts and Motives sections, persons' whereabouts,
+  and a place to pencil in your own assumptions, kept visually distinct from facts.
+
+Content and logic are separate: `data/npcs.ts` (cast & schedules), `data/dialogue/*`
+(typed scripts), `data/testimony.ts` (statements & contradictions),
+`data/relations.ts` (relationships, motives, memories, hints, album), interpreted by
+pure systems in `systems/conditions.ts`, `systems/dialogue.ts` and
+`systems/contradictions.ts`; `state/story.ts` applies results; `world/npc/*` renders and
+directs the cast; `ui/Conversation.tsx`, `ui/Flashback.tsx`, `relations/*` and
+`notebook/StoryPages.tsx` present them.
+
 ## Architecture
 
 ```

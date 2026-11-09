@@ -19,15 +19,17 @@ const node = (id: string) => (ZONE_BY_ID[id] ? OUTSIDE : id);
 
 interface Edge {
   to: string;
+  /** Door traversed, if any (stairs have none). */
+  door?: string;
   /** Points traversed, in order, going from `from` to `to`. */
   pts: Waypoint[];
 }
 
 function buildGraph(): Map<string, Edge[]> {
   const g = new Map<string, Edge[]>();
-  const add = (a: string, b: string, pts: Waypoint[]) => {
+  const add = (a: string, b: string, pts: Waypoint[], door?: string) => {
     if (!g.has(a)) g.set(a, []);
-    g.get(a)!.push({ to: b, pts });
+    g.get(a)!.push({ to: b, pts, door });
   };
   for (const d of DOORS) {
     const a = node(d.a);
@@ -39,8 +41,8 @@ function buildGraph(): Map<string, Edge[]> {
     const sideA = ca ? Math.sign((d.line === 'x' ? (ca.x0 + ca.x1) / 2 - d.x : (ca.z0 + ca.z1) / 2 - d.z)) || 1 : 1;
     const pa: Waypoint = { x: d.x + nx * sideA * 0.8, z: d.z + nz * sideA * 0.8, level: d.level };
     const pb: Waypoint = { x: d.x - nx * sideA * 0.8, z: d.z - nz * sideA * 0.8, level: d.level };
-    add(a, b, [pa, pb]);
-    add(b, a, [pb, pa]);
+    add(a, b, [pa, pb], d.id);
+    add(b, a, [pb, pa], d.id);
   }
   const grand = STAIRS.find((s) => s.id === 'grand-stair')!;
   const cellar = STAIRS.find((s) => s.id === 'cellar-stair')!;
@@ -59,7 +61,7 @@ function buildGraph(): Map<string, Edge[]> {
 const GRAPH = buildGraph();
 
 /** Breadth-first search over rooms (fewest doorways). */
-export function roomRoute(from: string, to: string): { rooms: string[]; edges: Edge[] } | null {
+export function roomRoute(from: string, to: string, canUse: (door: string) => boolean = () => true): { rooms: string[]; edges: Edge[] } | null {
   const start = node(from);
   const goal = node(to);
   if (start === goal) return { rooms: [start], edges: [] };
@@ -70,6 +72,7 @@ export function roomRoute(from: string, to: string): { rooms: string[]; edges: E
     const cur = q.shift()!;
     for (const e of GRAPH.get(cur) ?? []) {
       if (seen.has(e.to)) continue;
+      if (e.door && !canUse(e.door)) continue;
       seen.add(e.to);
       prev.set(e.to, { from: cur, edge: e });
       if (e.to === goal) {
@@ -171,8 +174,8 @@ export function outdoorPath(a: Waypoint, b: Waypoint): Waypoint[] {
 }
 
 /** Full waypoint list from a position in `fromRoom` to the centre of `toRoom`. */
-export function routeTo(pos: Waypoint, fromRoom: string, toRoom: string): Waypoint[] | null {
-  const r = roomRoute(fromRoom, toRoom);
+export function routeTo(pos: Waypoint, fromRoom: string, toRoom: string, canUse?: (door: string) => boolean): Waypoint[] | null {
+  const r = roomRoute(fromRoom, toRoom, canUse);
   if (!r) return null;
   const out: Waypoint[] = [];
   let cur = pos;
