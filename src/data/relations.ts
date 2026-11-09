@@ -61,7 +61,7 @@ export const TREE_NODES: Record<string, { x: number; y: number; name: string; no
   joni: { x: 92, y: 50, name: 'Joni' },
   ransom: { x: 13, y: 76, name: 'Ransom' },
   meg: { x: 84, y: 76, name: 'Meg' },
-  marta: { x: 50, y: 88, name: 'Marta', note: 'nurse' },
+  marta: { x: 68, y: 88, name: 'Marta', note: 'nurse' },
 };
 
 // ───────────────────────── Motives ─────────────────────────
