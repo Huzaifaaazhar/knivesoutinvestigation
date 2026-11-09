@@ -319,6 +319,8 @@ export function DocumentView(props: Props) {
       {paper}
       {props.loupe && lens && (
         <div
+          aria-hidden
+          data-loupe
           className="pointer-events-none absolute overflow-hidden rounded-full border-[6px] border-[#3a2a18] shadow-[0_10px_40px_rgba(0,0,0,0.7),inset_0_0_30px_rgba(0,0,0,0.25)]"
           style={{ width: L, height: L, left: lens.x - L / 2, top: lens.y - L / 2 }}
         >

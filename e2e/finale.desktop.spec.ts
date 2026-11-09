@@ -49,7 +49,7 @@ async function inspect(page: Page, id: string, at: { x: number; z: number; level
   await standAndLook(page, at, look);
   await waitForTarget(page, id);
   await page.keyboard.press('e');
-  for (const d of details) await page.locator(`[data-hotspot=${d}]`).first().click();
+  for (const d of details) await page.locator(`[data-hotspot=${d}]:not([data-loupe] *)`).first().click();
   if (collect) await page.getByTestId('collect').click();
   await page.getByTestId('close-inspection').click();
 }
@@ -68,7 +68,7 @@ test('a whole case, played through: from the gate to the case file', async ({ pa
   await waitForTarget(page, 'sealed-will');
   await page.keyboard.press('e');
   await expect(page.getByTestId('will-paper')).toBeVisible();
-  for (const d of ['beneficiary', 'annotation', 'witness', 'family', 'alteration']) await page.locator(`[data-testid=will-paper] [data-hotspot=${d}]`).click();
+  for (const d of ['beneficiary', 'annotation', 'witness', 'family', 'alteration']) await page.locator(`[data-testid=will-paper]:not([data-loupe] *) [data-hotspot=${d}]`).first().click();
   await page.getByTestId('collect-will').click();
   await page.getByTestId('will-a-W-exists-EV-20').click();
   await page.getByTestId('will-a-W-benefits-marta').click();
