@@ -67,6 +67,23 @@ function Mark({ m, seen, onClick }: { m: NonNullable<DocumentDef['marks']>[numbe
   );
 }
 
+/** Split a `| a | b |` row on pipes that are not inside [[id|text]] markup. */
+export function splitCells(row: string): string[] {
+  const cells: string[] = [];
+  let depth = 0;
+  let cur = '';
+  for (let i = 0; i < row.length; i++) {
+    if (row.startsWith('[[', i)) depth++;
+    if (row.startsWith(']]', i)) depth = Math.max(0, depth - 1);
+    if (row[i] === '|' && depth === 0) {
+      cells.push(cur);
+      cur = '';
+    } else cur += row[i];
+  }
+  cells.push(cur);
+  return cells.slice(1, -1).map((c) => c.trim());
+}
+
 function PolaroidImage({ onDetail, seen }: { onDetail: (id: string) => void; seen: string[] }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -194,12 +211,7 @@ function Paper({ doc, ...p }: Props & { doc: DocumentDef }) {
     );
   }
   if (doc.paper === 'ledger') {
-    const rows = doc.body.map((r) =>
-      r
-        .split('|')
-        .slice(1, -1)
-        .map((c) => c.trim()),
-    );
+    const rows = doc.body.map((r) => splitCells(r));
     return (
       <div className="paper relative w-[min(92vw,620px)] rounded-[2px] px-6 py-8 shadow-[0_30px_80px_rgba(0,0,0,0.8)] sm:px-10">
         <div className="mb-5 border-b-2 border-ink/50 pb-2 font-mono text-xs uppercase tracking-[0.3em]">{doc.heading}</div>

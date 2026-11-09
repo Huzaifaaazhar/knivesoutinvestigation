@@ -147,3 +147,10 @@ describe('interactables & evidence', () => {
     }
   });
 });
+
+import { splitCells } from '../inspection/DocumentView';
+describe('document ledger rows', () => {
+  it('keeps hotspot markup intact when splitting cells', () => {
+    expect(splitCells('| Sep 09 | [[refund|Overpayment — refunded]] | — |')).toEqual(['Sep 09', '[[refund|Overpayment — refunded]]', '—']);
+  });
+});
