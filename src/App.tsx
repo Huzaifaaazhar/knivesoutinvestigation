@@ -9,7 +9,7 @@ import { PlayerController } from './player/PlayerController';
 import { IntroCamera } from './player/IntroCamera';
 import { input, isTouchDevice } from './player/input';
 import { BootScreen, Invitation, Opening } from './ui/Opening';
-import { Crosshair, CornerHint, FadeCurtain, FirstSteps, InteractionPrompt, RoomCard, TargetMarker, Toasts } from './ui/HUD';
+import { Crosshair, CornerHint, FadeCurtain, FirstSteps, InteractionPrompt, RoomCard, TargetAnchor, TargetMarker, Toasts } from './ui/HUD';
 import { TouchControls } from './ui/TouchControls';
 import { PauseMenu } from './ui/PauseMenu';
 import { InspectionOverlay } from './inspection/InspectionOverlay';
@@ -56,13 +56,14 @@ export default function App() {
             <World />
           </Suspense>
           {playing ? <PlayerController /> : <IntroCamera />}
-          {playing && <TargetMarker />}
+          {playing && <TargetAnchor />}
         </Canvas>
       </div>
 
       {playing && (
         <>
           <Crosshair />
+          <TargetMarker />
           <RoomCard />
           <InteractionPrompt />
           <CornerHint />

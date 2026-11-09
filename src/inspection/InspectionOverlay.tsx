@@ -1,6 +1,7 @@
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Html, OrbitControls } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
+import { ScreenAnchors } from '../ui/ScreenAnchors';
 import { AnimatePresence, motion } from 'framer-motion';
 import * as THREE from 'three';
 import { INTERACTABLE_BY_ID, type Hotspot } from '../data/interactables';
@@ -14,9 +15,9 @@ import { audio } from '../audio/audio';
 /** Stable empty list: a fresh [] in a selector would re-render forever. */
 const NONE: string[] = [];
 
-function HotspotMarker({ h, seen, active, onClick }: { h: Hotspot; seen: boolean; active: boolean; onClick: () => void }) {
+function HotspotMarker({ h, seen, active, onClick, elRef }: { h: Hotspot; seen: boolean; active: boolean; onClick: () => void; elRef: (e: HTMLElement | null) => void }) {
   return (
-    <Html position={h.at} center zIndexRange={[30, 20]}>
+    <div ref={elRef} className="absolute left-0 top-0 z-10" style={{ display: 'none' }}>
       <button
         data-hotspot={h.id}
         onClick={onClick}
@@ -27,7 +28,7 @@ function HotspotMarker({ h, seen, active, onClick }: { h: Hotspot; seen: boolean
         <span className={`h-3 w-3 rounded-full border-2 transition ${active ? 'scale-125 border-ivory bg-blood' : seen ? 'border-gold bg-gold/70' : 'border-gold bg-shadow/40 group-hover:bg-gold/40'}`} />
         {seen && <span className="pointer-events-none absolute left-9 whitespace-nowrap rounded-sm bg-shadow/70 px-2 py-0.5 font-ui text-[10px] text-ivory/90">{h.label}</span>}
       </button>
-    </Html>
+    </div>
   );
 }
 
@@ -42,8 +43,13 @@ function Turntable({ id, onDetail, active }: { id: string; onDetail: (h: string)
   const r = def.inspectVisual?.distance ? def.inspectVisual.distance / 2.4 : V.radius;
   const center = useMemo(() => new THREE.Vector3(...V.center), [V]);
   const isWall = key === 'portrait' || key === 'trellis' || key === 'knifeWheel' || key === 'latch' || key === 'plaque' || key === 'fuseBox';
+  const hs = useMemo(() => (def.hotspots ?? []).filter((h) => h.at), [def]);
+  const points = useRef<([number, number, number] | null)[]>([]);
+  points.current = hs.map((h) => h.at!);
+  const els = useRef<(HTMLElement | null)[]>([]);
   const camPos: [number, number, number] = isWall ? [center.x + r * 0.4, center.y + r * 0.15, center.z + r * 2.4] : [center.x + r * 1.4, center.y + r * 1.5, center.z + r * 1.9];
   return (
+    <div className="absolute inset-0">
     <Canvas
       camera={{ position: camPos, fov: 38, near: 0.01, far: 100 }}
       dpr={[1, 2]}
@@ -61,11 +67,6 @@ function Turntable({ id, onDetail, active }: { id: string; onDetail: (h: string)
       <Suspense fallback={null}>
         <group>
           <V.C {...props} />
-          {(def.hotspots ?? [])
-            .filter((h) => h.at)
-            .map((h) => (
-              <HotspotMarker key={h.id} h={h} seen={seen.includes(h.id)} active={active === h.id} onClick={() => onDetail(h.id)} />
-            ))}
         </group>
       </Suspense>
       {!isWall && (
@@ -87,7 +88,16 @@ function Turntable({ id, onDetail, active }: { id: string; onDetail: (h: string)
         minAzimuthAngle={isWall ? -0.9 : -Infinity}
         maxAzimuthAngle={isWall ? 0.9 : Infinity}
       />
+      <ScreenAnchors points={points} els={els} />
     </Canvas>
+    <div className="pointer-events-none absolute inset-0 overflow-hidden [&_button]:pointer-events-auto">
+      {hs.map((h, i) => (
+        <HotspotMarker key={h.id} h={h} seen={seen.includes(h.id)} active={active === h.id} onClick={() => onDetail(h.id)} elRef={(e) => {
+          els.current[i] = e;
+        }} />
+      ))}
+    </div>
+    </div>
   );
 }
 

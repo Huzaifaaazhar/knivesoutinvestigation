@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Html } from '@react-three/drei';
+import { ScreenAnchors } from './ScreenAnchors';
 import { gameClock, useGame } from '../state/store';
 import { promptFor } from '../interaction/actions';
 import { doorIdOf, isDoorTarget } from '../interaction/targeting';
@@ -8,29 +8,44 @@ import { DOOR_BY_ID, LEVEL_NAMES, LEVEL_Y, ROOM_BY_ID, ZONE_BY_ID } from '../dat
 import { INTERACTABLE_BY_ID } from '../data/interactables';
 import { input } from '../player/input';
 
+/** World position of the current target (null when nothing is targeted). */
+function targetPoint(target: string | null): [number, number, number] | null {
+  if (!target) return null;
+  if (isDoorTarget(target)) {
+    const d = DOOR_BY_ID[doorIdOf(target)];
+    return [d.x, LEVEL_Y[d.level] + 1.15, d.z];
+  }
+  return INTERACTABLE_BY_ID[target]?.pos ?? null;
+}
+
+const markerPoint = { current: [null] as ([number, number, number] | null)[] };
+const markerEl = { current: [null] as (HTMLElement | null)[] };
+
+/** Inside the Canvas: keeps the marker glued to the targeted object. */
+export function TargetAnchor() {
+  const target = useGame((s) => s.target);
+  markerPoint.current[0] = targetPoint(target);
+  return <ScreenAnchors points={markerPoint} els={markerEl} />;
+}
+
 /** In-world indicator: a small gold diamond hovering at the targeted object. */
 export function TargetMarker() {
   const target = useGame((s) => s.target);
   const overlay = useGame((s) => s.overlay);
   const examined = useGame((s) => s.examined);
-  if (!target || overlay !== 'none') return null;
-  let pos: [number, number, number];
-  if (isDoorTarget(target)) {
-    const d = DOOR_BY_ID[doorIdOf(target)];
-    pos = [d.x, LEVEL_Y[d.level] + 1.15, d.z];
-  } else {
-    const it = INTERACTABLE_BY_ID[target];
-    if (!it) return null;
-    pos = it.pos;
-  }
-  const fresh = !isDoorTarget(target) && !examined.includes(target);
+  const fresh = !!target && !isDoorTarget(target) && !examined.includes(target);
+  const show = !!target && overlay === 'none';
   return (
-    <Html position={pos} center zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-      <div className="relative flex h-6 w-6 items-center justify-center">
-        {fresh && <span className="pulse-ring absolute h-4 w-4 rotate-45 border border-gold/70" />}
-        <span className="h-2 w-2 rotate-45 border border-gold bg-gold/40 shadow-[0_0_10px_rgba(182,154,101,0.9)]" />
+    <div className="pointer-events-none fixed inset-0" style={{ visibility: show ? 'visible' : 'hidden' }}>
+      <div ref={(e) => {
+          markerEl.current[0] = e;
+        }} className="absolute left-0 top-0" data-testid="target-marker">
+        <div className="relative flex h-6 w-6 items-center justify-center">
+          {fresh && <span className="pulse-ring absolute h-4 w-4 rotate-45 border border-gold/70" />}
+          <span className="h-2 w-2 rotate-45 border border-gold bg-gold/40 shadow-[0_0_10px_rgba(182,154,101,0.9)]" />
+        </div>
       </div>
-    </Html>
+    </div>
   );
 }
 
@@ -83,6 +98,7 @@ export function Crosshair() {
 
 export function RoomCard() {
   const card = useGame((s) => s.roomCard);
+  const overlay = useGame((s) => s.overlay);
   const [show, setShow] = useState<typeof card>(null);
   useEffect(() => {
     if (!card) return;
@@ -94,7 +110,7 @@ export function RoomCard() {
   const zone = show ? ZONE_BY_ID[show.id] : null;
   return (
     <AnimatePresence>
-      {show && (
+      {show && overlay === 'none' && (
         <motion.div
           key={show.t}
           data-testid="room-card"

@@ -281,8 +281,8 @@ export const INTERACTABLES: InteractableDef[] = [
     evidence: 'EV-02',
     observation: 'Marta\'s medical bag, left in the study. Two vials with identical caps and nearly identical labels.',
     hotspots: [
-      { id: 'vials', label: 'The two vials', detail: 'MORPHINE 100 mg/ml and KETOROLAC (Toradol) 30 mg/ml. Same cap, same size, same glass.', at: [0.0, 0.2, 0.05], key: true },
-      { id: 'labels', label: 'Labels', detail: 'The Toradol label has been peeled and re-stuck. Recently.', at: [0.09, 0.2, 0.08], key: true },
+      { id: 'vials', label: 'The two vials', detail: 'MORPHINE 100 mg/ml and KETOROLAC (Toradol) 30 mg/ml. Same cap, same size, same glass.', at: [-0.03, 0.11, 0.22], key: true },
+      { id: 'labels', label: 'Labels', detail: 'The Toradol label has been peeled and re-stuck. Recently.', at: [0.03, 0.045, 0.245], key: true },
       { id: 'tag', label: 'Name tag', detail: '"M. CABRERA, RN". Stitched by hand.', at: [-0.15, 0.08, 0.13] },
     ],
   },

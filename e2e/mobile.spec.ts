@@ -13,9 +13,9 @@ test('touch controls: joystick walks, interact button, notebook readable', async
   const surface = page.getByTestId('touch-controls').locator('div').first();
   await surface.dispatchEvent('pointerdown', { pointerId: 7, pointerType: 'touch', clientX: sx, clientY: sy, isPrimary: true });
   await surface.dispatchEvent('pointermove', { pointerId: 7, pointerType: 'touch', clientX: sx, clientY: sy - 50, isPrimary: true });
-  await page.waitForTimeout(2500);
+  // hold the stick; frame rate under software WebGL is low, so poll rather than sleep
+  await expect.poll(() => state<number>(page, 'r.z'), { timeout: 60_000 }).toBeLessThan(z0 - 0.5);
   await surface.dispatchEvent('pointerup', { pointerId: 7, pointerType: 'touch', clientX: sx, clientY: sy - 50, isPrimary: true });
-  expect(await state<number>(page, 'r.z')).toBeLessThan(z0 - 0.5);
 
   // contextual interaction button
   await standAndLook(page, { x: 0, z: 12.2, level: 0 }, [0, 1.3, 10]);
