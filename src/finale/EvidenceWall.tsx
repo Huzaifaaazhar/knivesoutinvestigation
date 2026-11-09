@@ -138,10 +138,22 @@ export function EvidenceWall() {
     const r = boardRef.current!.getBoundingClientRect();
     return { x: (clientX - r.left - view.x) / view.z, y: (clientY - r.top - view.y) / view.z };
   };
+  /** The nearest free patch of cork to the middle of the view, so new pins never bury old ones. */
   const center = () => {
     const r = boardRef.current!.getBoundingClientRect();
     const p = toBoard(r.left + r.width / 2, r.top + r.height / 2);
-    return { x: Math.max(0, Math.min(BOARD_W - 180, p.x - 80 + (Math.random() - 0.5) * 120)), y: Math.max(0, Math.min(BOARD_H - 120, p.y - 40 + (Math.random() - 0.5) * 80)) };
+    const free = (x: number, y: number) => wall.cards.every((c) => Math.abs(c.x - x) > 185 || Math.abs(c.y - y) > 150);
+    const clampX = (x: number) => Math.max(10, Math.min(BOARD_W - 190, x));
+    const clampY = (y: number) => Math.max(10, Math.min(BOARD_H - 150, y));
+    for (let ring = 0; ring < 8; ring++)
+      for (let dx = -ring; dx <= ring; dx++)
+        for (let dy = -ring; dy <= ring; dy++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
+          const x = clampX(p.x - 90 + dx * 190);
+          const y = clampY(p.y - 60 + dy * 155);
+          if (free(x, y)) return { x, y };
+        }
+    return { x: clampX(p.x - 90 + (Math.random() - 0.5) * 200), y: clampY(p.y - 60 + (Math.random() - 0.5) * 160) };
   };
   const byId = Object.fromEntries(wall.cards.map((c) => [c.id, c]));
   const anchor = (c: WallCard) => ({ x: c.x + CARD_W[c.kind] / 2, y: c.y + 8 });
