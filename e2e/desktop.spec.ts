@@ -127,6 +127,9 @@ test('pick up the estate plan and set a course from the floor plan', async ({ pa
   await standAndLook(page, { x: 0, z: 40, level: 0 }, [0, 1.6, 0]);
   await expect.poll(() => state<string>(page, 'r.room')).not.toBe('hall');
   await page.keyboard.press('m');
+  // outdoors, the plan opens on the Grounds sheet
+  await expect(page.getByTestId('sheet-grounds')).toHaveClass(/bg-ivory/);
+  await page.getByTestId('sheet-0').click();
   await page.getByTestId('plan-room-hall').click();
   await page.getByTestId('set-course').click();
   expect(await state<string>(page, 's.navTarget')).toBe('hall');
