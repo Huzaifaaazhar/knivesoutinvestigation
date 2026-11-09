@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { ScreenAnchors } from '../ui/ScreenAnchors';
@@ -40,6 +40,11 @@ function Turntable({ id, onDetail, active }: { id: string; onDetail: (h: string)
   const seen = useGame((s) => s.details[id] ?? NONE);
   const reduced = useGame((s) => s.settings.reducedMotion);
   const [touched, setTouched] = useState(false);
+  // a short showcase turn, then hold still so the detail rings are easy to hit
+  useEffect(() => {
+    const t = setTimeout(() => setTouched(true), 3000);
+    return () => clearTimeout(t);
+  }, []);
   const r = def.inspectVisual?.distance ? def.inspectVisual.distance / 2.4 : V.radius;
   const center = useMemo(() => new THREE.Vector3(...V.center), [V]);
   const isWall = key === 'portrait' || key === 'trellis' || key === 'knifeWheel' || key === 'latch' || key === 'plaque' || key === 'fuseBox';
@@ -49,7 +54,7 @@ function Turntable({ id, onDetail, active }: { id: string; onDetail: (h: string)
   const els = useRef<(HTMLElement | null)[]>([]);
   const camPos: [number, number, number] = isWall ? [center.x + r * 0.4, center.y + r * 0.15, center.z + r * 2.4] : [center.x + r * 1.4, center.y + r * 1.5, center.z + r * 1.9];
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0" onPointerEnter={() => setTouched(true)}>
     <Canvas
       camera={{ position: camPos, fov: 38, near: 0.01, far: 100 }}
       dpr={[1, 2]}
