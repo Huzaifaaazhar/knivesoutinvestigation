@@ -199,6 +199,7 @@ export function CornerHint() {
 }
 
 export function FirstSteps() {
+  const overlay = useGame((s) => s.overlay);
   const [show, setShow] = useState(true);
   useEffect(() => {
     const t = setTimeout(() => setShow(false), 9000);
@@ -206,7 +207,7 @@ export function FirstSteps() {
   }, []);
   return (
     <AnimatePresence>
-      {show && (
+      {show && overlay === 'none' && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
