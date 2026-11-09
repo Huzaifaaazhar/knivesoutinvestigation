@@ -11,6 +11,9 @@ import { VISUALS } from '../world/props';
 import { DocumentView } from './DocumentView';
 import { audio } from '../audio/audio';
 
+/** Stable empty list: a fresh [] in a selector would re-render forever. */
+const NONE: string[] = [];
+
 function HotspotMarker({ h, seen, active, onClick }: { h: Hotspot; seen: boolean; active: boolean; onClick: () => void }) {
   return (
     <Html position={h.at} center zIndexRange={[30, 20]}>
@@ -33,7 +36,7 @@ function Turntable({ id, onDetail, active }: { id: string; onDetail: (h: string)
   const key = def.inspectVisual?.visual ?? def.model?.visual ?? 'letter';
   const V = VISUALS[key];
   const props = def.inspectVisual?.props ?? def.model?.props ?? {};
-  const seen = useGame((s) => s.details[id] ?? []);
+  const seen = useGame((s) => s.details[id] ?? NONE);
   const reduced = useGame((s) => s.settings.reducedMotion);
   const [touched, setTouched] = useState(false);
   const r = def.inspectVisual?.distance ? def.inspectVisual.distance / 2.4 : V.radius;
@@ -91,7 +94,7 @@ function Turntable({ id, onDetail, active }: { id: string; onDetail: (h: string)
 export function InspectionOverlay() {
   const id = useGame((s) => s.inspecting);
   const overlay = useGame((s) => s.overlay);
-  const seen = useGame((s) => (id ? s.details[id] ?? [] : []));
+  const seen = useGame((s) => (id ? s.details[id] ?? NONE : NONE));
   const collected = useGame((s) => {
     const ev = id ? INTERACTABLE_BY_ID[id]?.evidence : undefined;
     return ev ? !!s.evidence[ev] : false;

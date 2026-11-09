@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { outdoorClear, outdoorPath, roomRoute, routeTo } from './navigation';
+import { outdoorClear, outdoorPath, roomRoute, routeTo, type Waypoint } from './navigation';
 
 describe('navigation assistance', () => {
   it('routes from the gate to Harlan’s bedroom through the hall and up the stairs', () => {
@@ -19,7 +19,7 @@ describe('navigation assistance', () => {
     expect(outdoorClear(a, b)).toBe(false);
     const path = outdoorPath(a, b);
     expect(path.length).toBeGreaterThan(1);
-    let prev = a;
+    let prev: Waypoint = a;
     for (const p of path) {
       expect(outdoorClear(prev, p)).toBe(true);
       prev = p;
