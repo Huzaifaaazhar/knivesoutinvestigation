@@ -54,7 +54,7 @@ function CardFace({ c }: { c: WallCard }) {
       return (
         <div className="w-[96px] bg-[#f4efe4] p-1.5 pb-1 shadow-[0_6px_14px_rgba(0,0,0,0.45)]">
           <img src={portraitDataUrl(c.ref)} alt="" className="h-[96px] w-full object-cover sepia-[0.3]" draggable={false} />
-          <div className="hand text-center text-[1.05rem] leading-none text-ink">{ch?.name.split(' ')[0]}</div>
+          <div className="hand text-center text-[1.05rem] leading-none text-ink">{c.ref === 'harlan' ? 'Harlan' : nameOf(c.ref) || ch?.name}</div>
         </div>
       );
     }
@@ -324,7 +324,7 @@ export function EvidenceWall() {
           </div>
 
           {pending && (
-            <div className="absolute left-1/2 top-6 z-20 w-[min(92vw,360px)] -translate-x-1/2 bg-[#f4efe4] p-3 shadow-2xl" data-testid="link-type-picker">
+            <div onPointerDown={(e) => e.stopPropagation()} className="absolute left-1/2 top-6 z-20 w-[min(92vw,360px)] -translate-x-1/2 bg-[#f4efe4] p-3 shadow-2xl" data-testid="link-type-picker">
               <div className="mb-2 font-mono text-[9px] uppercase tracking-[0.25em] text-ink/60">How does this connect?</div>
               {(Object.keys(LINK_STYLE) as LinkType[]).map((t) => (
                 <button
@@ -346,7 +346,7 @@ export function EvidenceWall() {
             </div>
           )}
           {selLink && (
-            <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-wrap items-center gap-1 bg-[#f4efe4] p-2 shadow-2xl">
+            <div onPointerDown={(e) => e.stopPropagation()} className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-wrap items-center gap-1 bg-[#f4efe4] p-2 shadow-2xl">
               {(Object.keys(LINK_STYLE) as LinkType[]).map((t) => {
                 const l = wall.links.find((x) => x.id === selLink)!;
                 return (
