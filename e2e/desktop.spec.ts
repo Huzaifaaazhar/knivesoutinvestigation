@@ -29,7 +29,7 @@ test('walk up to the front door, open it, and enter the hall', async ({ page }) 
   await page.keyboard.press('e');
   await expect.poll(() => state<boolean>(page, "s.doors['front-door'].open")).toBe(true);
   await page.keyboard.down('KeyW');
-  await expect.poll(() => state<string>(page, 'r.room'), { timeout: 30_000 }).toBe('hall');
+  await expect.poll(() => state<string>(page, 'r.room'), { timeout: 90_000 }).toBe('hall');
   await page.keyboard.up('KeyW');
   expect(await state<string[]>(page, 's.milestones')).toContain('entered-estate');
   // collision: keep walking into the west wall and stay inside

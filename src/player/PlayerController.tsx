@@ -140,7 +140,7 @@ export function PlayerController() {
   );
 
   useFrame((_, rawDt) => {
-    const dt = Math.min(rawDt, 0.05);
+    const dt = Math.min(rawDt, 0.1); // collision is sub-stepped, so long frames stay safe
     const s = useGame.getState();
     if (s.phase !== 'playing') return;
     const settings = s.settings;
